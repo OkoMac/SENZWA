@@ -1,5 +1,6 @@
 const express = require('express');
 const whatsappService = require('../services/whatsappService');
+const conversationRouter = require('../services/conversationRouter');
 const { authenticate } = require('../middleware/auth');
 const logger = require('../utils/logger');
 
@@ -78,77 +79,39 @@ router.post('/send', authenticate, async (req, res) => {
 });
 
 /**
- * Handle incoming WhatsApp messages with AI-powered responses
+ * Handle incoming WhatsApp messages with AI-powered conversational routing
  */
 async function handleIncomingMessage(msg) {
-  const text = (msg.text || '').trim().toUpperCase();
+  try {
+    // Route through the conversational AI engine
+    const response = conversationRouter.processMessage(
+      msg.from,
+      msg.text || '',
+      msg.type
+    );
 
-  // Basic conversational responses
-  if (text === 'HELP' || text === 'HI' || text === 'HELLO') {
+    // Send the response based on type
+    if (response.buttons && response.buttons.length > 0) {
+      await whatsappService.sendInteractiveButtons(
+        msg.from,
+        response.text,
+        response.buttons
+      );
+    } else {
+      await whatsappService.sendMessage(msg.from, response.text);
+    }
+
+    logger.info('WhatsApp response sent', {
+      to: msg.from,
+      responseType: response.type,
+      textLength: response.text.length,
+    });
+  } catch (err) {
+    logger.error('Failed to handle WhatsApp message', { error: err.message, from: msg.from });
+    // Fallback response
     await whatsappService.sendMessage(
       msg.from,
-      `Welcome to Senzwa MigrateSA! 🇿🇦
-
-I can help you with:
-1️⃣ CHECK - Check your visa eligibility
-2️⃣ STATUS - Check your application status
-3️⃣ DOCS - View required documents
-4️⃣ GUIDE - Get step-by-step guidance
-
-Reply with a keyword to get started!`
-    );
-  } else if (text === 'CHECK') {
-    await whatsappService.sendMessage(
-      msg.from,
-      `To check your visa eligibility, I need some information:
-
-Please tell me:
-1. Your nationality
-2. Purpose of visit (work, study, business, tourism, family, retirement)
-3. How long you plan to stay
-
-Example: "Nigerian, work, 2 years"
-
-Or visit senzwa.co.za to complete the full eligibility assessment.`
-    );
-  } else if (text === 'STATUS') {
-    await whatsappService.sendMessage(
-      msg.from,
-      `To check your application status, please provide your Application ID.
-
-You can find it in your Senzwa dashboard or in previous messages from us.
-
-Format: STATUS [your-app-id]`
-    );
-  } else if (text === 'DOCS') {
-    await whatsappService.sendInteractiveList(
-      msg.from,
-      'Document Requirements',
-      'Select a visa type to see required documents:',
-      'View Visa Types',
-      [
-        {
-          title: 'Common Visa Types',
-          rows: [
-            { id: 'visitor_tourism', title: 'Tourist Visa', description: 'Tourism and leisure' },
-            { id: 'study_visa', title: 'Study Visa', description: 'Educational studies' },
-            { id: 'general_work', title: 'General Work Visa', description: 'Employment' },
-            { id: 'critical_skills', title: 'Critical Skills', description: 'Critical skills work' },
-            { id: 'spousal_visa', title: 'Spousal Visa', description: 'Marriage to SA citizen' },
-          ],
-        },
-      ]
-    );
-  } else {
-    await whatsappService.sendMessage(
-      msg.from,
-      `Thank you for your message. For the best experience, please visit senzwa.co.za or use these commands:
-
-HELP - Get assistance
-CHECK - Check visa eligibility
-STATUS - Application status
-DOCS - Required documents
-GUIDE - Step-by-step guidance`
+      'Sorry, I encountered an issue processing your message. Please try again or visit senzwa.co.za for assistance.'
     );
   }
 }

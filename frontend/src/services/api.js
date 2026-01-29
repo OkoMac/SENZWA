@@ -81,4 +81,20 @@ export const applicationAPI = {
   getAudit: (id) => api.get(`/applications/${id}/audit`),
 };
 
+// Knowledge Base (public - no auth required)
+export const knowledgeAPI = {
+  getOverview: () => api.get('/knowledge/overview'),
+  getVisaCategories: (params) => api.get('/knowledge/visa-categories', { params }),
+  getVisaCategory: (id) => api.get(`/knowledge/visa-categories/${id}`),
+  getCriticalSkills: (params) => api.get('/knowledge/critical-skills', { params }),
+  getCountryRequirements: (country) => api.get(`/knowledge/country/${encodeURIComponent(country)}`),
+  getProcessingTimes: () => api.get('/knowledge/processing-times'),
+  getFees: () => api.get('/knowledge/fees'),
+  getDHAOffices: (params) => api.get('/knowledge/dha-offices', { params }),
+  getProfessionalBodies: (params) => api.get('/knowledge/professional-bodies', { params }),
+  getFAQ: (params) => api.get('/knowledge/faq', { params }),
+  getVisaExemptCountries: () => api.get('/knowledge/visa-exempt-countries'),
+  getChecklist: (visaCategoryId) => api.get(`/knowledge/checklist/${visaCategoryId}`),
+};
+
 export default api;

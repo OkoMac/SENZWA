@@ -7,7 +7,7 @@ export default function Navbar() {
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const isActive = (path) => location.pathname === path;
+  const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/');
 
   return (
     <nav style={styles.nav}>
@@ -18,19 +18,29 @@ export default function Navbar() {
           <span style={styles.logoSub}>MigrateSA</span>
         </Link>
 
-        {user && (
-          <div style={styles.desktopMenu}>
-            <Link to="/dashboard" style={{...styles.navLink, ...(isActive('/dashboard') ? styles.navLinkActive : {})}}>
-              Dashboard
-            </Link>
-            <Link to="/visas" style={{...styles.navLink, ...(isActive('/visas') ? styles.navLinkActive : {})}}>
-              Visa Categories
-            </Link>
-            <Link to="/eligibility" style={{...styles.navLink, ...(isActive('/eligibility') ? styles.navLinkActive : {})}}>
-              Eligibility Check
-            </Link>
-          </div>
-        )}
+        <div style={styles.desktopMenu}>
+          {/* Knowledge Hub is ALWAYS visible - even without login */}
+          <Link to="/knowledge" style={{...styles.navLink, ...styles.knowledgeLink, ...(isActive('/knowledge') ? styles.navLinkActive : {})}}>
+            Knowledge Hub
+          </Link>
+
+          {user && (
+            <>
+              <Link to="/dashboard" style={{...styles.navLink, ...(isActive('/dashboard') ? styles.navLinkActive : {})}}>
+                Dashboard
+              </Link>
+              <Link to="/visas" style={{...styles.navLink, ...(isActive('/visas') ? styles.navLinkActive : {})}}>
+                Visa Categories
+              </Link>
+              <Link to="/eligibility" style={{...styles.navLink, ...(isActive('/eligibility') ? styles.navLinkActive : {})}}>
+                Eligibility Check
+              </Link>
+              <Link to="/tracker" style={{...styles.navLink, ...(isActive('/tracker') ? styles.navLinkActive : {})}}>
+                Track Application
+              </Link>
+            </>
+          )}
+        </div>
 
         <div style={styles.right}>
           {user ? (
@@ -44,24 +54,34 @@ export default function Navbar() {
               <Link to="/register" className="btn btn-primary" style={styles.registerBtn}>Get Started</Link>
             </div>
           )}
-          {user && (
-            <button
-              style={styles.hamburger}
-              onClick={() => setMenuOpen(!menuOpen)}
-              aria-label="Menu"
-            >
-              {menuOpen ? '\u2715' : '\u2630'}
-            </button>
-          )}
+          <button
+            style={styles.hamburger}
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-label="Menu"
+          >
+            {menuOpen ? '\u2715' : '\u2630'}
+          </button>
         </div>
       </div>
 
-      {menuOpen && user && (
+      {menuOpen && (
         <div style={styles.mobileMenu}>
-          <Link to="/dashboard" style={styles.mobileLink} onClick={() => setMenuOpen(false)}>Dashboard</Link>
-          <Link to="/visas" style={styles.mobileLink} onClick={() => setMenuOpen(false)}>Visa Categories</Link>
-          <Link to="/eligibility" style={styles.mobileLink} onClick={() => setMenuOpen(false)}>Eligibility Check</Link>
-          <button onClick={() => { logout(); setMenuOpen(false); }} style={styles.mobileLogout}>Logout</button>
+          <Link to="/knowledge" style={styles.mobileLink} onClick={() => setMenuOpen(false)}>Knowledge Hub</Link>
+          {user && (
+            <>
+              <Link to="/dashboard" style={styles.mobileLink} onClick={() => setMenuOpen(false)}>Dashboard</Link>
+              <Link to="/visas" style={styles.mobileLink} onClick={() => setMenuOpen(false)}>Visa Categories</Link>
+              <Link to="/eligibility" style={styles.mobileLink} onClick={() => setMenuOpen(false)}>Eligibility Check</Link>
+              <Link to="/tracker" style={styles.mobileLink} onClick={() => setMenuOpen(false)}>Track Application</Link>
+              <button onClick={() => { logout(); setMenuOpen(false); }} style={styles.mobileLogout}>Logout</button>
+            </>
+          )}
+          {!user && (
+            <>
+              <Link to="/login" style={styles.mobileLink} onClick={() => setMenuOpen(false)}>Log In</Link>
+              <Link to="/register" style={styles.mobileLink} onClick={() => setMenuOpen(false)}>Get Started</Link>
+            </>
+          )}
         </div>
       )}
     </nav>
@@ -128,6 +148,10 @@ const styles = {
     color: '#495057',
     textDecoration: 'none',
     transition: 'all 0.2s',
+  },
+  knowledgeLink: {
+    fontWeight: 600,
+    color: '#1a5632',
   },
   navLinkActive: {
     background: '#e8f5e9',

@@ -18,7 +18,9 @@ SENZWA/
 │   │   ├── services/          # Core business logic
 │   │   │   ├── eligibilityEngine.js    # AI rules engine (Immigration Act)
 │   │   │   ├── documentValidator.js    # Document validation service
-│   │   │   └── whatsappService.js      # WhatsApp Business API
+│   │   │   ├── whatsappService.js      # WhatsApp Business API
+│   │   │   ├── conversationRouter.js   # AI conversational routing engine
+│   │   │   └── pdfExportService.js     # PDF document generation
 │   │   └── utils/             # Logger, helpers
 │   └── tests/                 # Jest test suites
 ├── frontend/                   # React Web Application

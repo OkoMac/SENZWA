@@ -12,6 +12,8 @@ import VisaDetail from './pages/VisaDetail';
 import EligibilityCheck from './pages/EligibilityCheck';
 import ApplicationView from './pages/ApplicationView';
 import DocumentUpload from './pages/DocumentUpload';
+import KnowledgeHub from './pages/KnowledgeHub';
+import ApplicationTracker from './pages/ApplicationTracker';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -45,6 +47,8 @@ function AppContent() {
             <Route path="/eligibility" element={<ProtectedRoute><EligibilityCheck /></ProtectedRoute>} />
             <Route path="/applications/:id" element={<ProtectedRoute><ApplicationView /></ProtectedRoute>} />
             <Route path="/applications/:id/documents" element={<ProtectedRoute><DocumentUpload /></ProtectedRoute>} />
+            <Route path="/knowledge" element={<KnowledgeHub />} />
+            <Route path="/tracker" element={<ProtectedRoute><ApplicationTracker /></ProtectedRoute>} />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </main>

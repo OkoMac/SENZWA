@@ -14,6 +14,8 @@ const eligibilityRoutes = require('./routes/eligibility');
 const whatsappRoutes = require('./routes/whatsapp');
 const auditRoutes = require('./routes/audit');
 const adminRoutes = require('./routes/admin');
+const knowledgeRoutes = require('./routes/knowledge');
+const exportRoutes = require('./routes/export');
 
 const { errorHandler, notFound } = require('./middleware/errorHandler');
 const { auditLog } = require('./middleware/auditLog');
@@ -65,6 +67,8 @@ app.use('/api/eligibility', eligibilityRoutes);
 app.use('/api/whatsapp', whatsappRoutes);
 app.use('/api/audit', auditRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/knowledge', knowledgeRoutes);
+app.use('/api/export', exportRoutes);
 
 // Serve uploads
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
