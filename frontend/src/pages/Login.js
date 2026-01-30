@@ -17,7 +17,7 @@ export default function Login() {
       await login(form.email, form.password);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.error || 'Login failed. Please check your credentials.');
+      setError(err.response?.data?.error || (err.code === 'ERR_NETWORK' ? 'Cannot connect to server. The backend API is not running.' : 'Login failed. Please check your credentials.'));
     } finally {
       setLoading(false);
     }
@@ -28,7 +28,7 @@ export default function Login() {
       <div style={s.container}>
         <div style={s.card}>
           <div style={s.header}>
-            <div style={s.logoMark}>S</div>
+            <img src="/logo-dark.svg" alt="Senzwa" style={{ height: 40, marginBottom: 12 }} />
             <h1 style={s.title}>Welcome back</h1>
             <p style={s.subtitle}>Sign in to continue your migration journey</p>
           </div>

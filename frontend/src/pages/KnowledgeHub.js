@@ -2,6 +2,258 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { knowledgeAPI } from '../services/api';
 
+const FALLBACK_DATA = {
+  overview: {
+    totalVisaCategories: 22,
+    totalCriticalSkills: 83,
+  },
+  visas: {
+    categories: [
+      { id: 'critical-skills', name: 'Critical Skills Work Visa', description: 'For foreign nationals possessing skills on the Critical Skills List published by the Minister of Home Affairs. Allows employment without a prior job offer.', maxDuration: '5 years', legalReference: 'Section 19(4) Immigration Act', category: 'Work' },
+      { id: 'general-work', name: 'General Work Visa', description: 'For foreign nationals with a confirmed job offer from a South African employer who can demonstrate that no suitable citizen or permanent resident is available.', maxDuration: '5 years', legalReference: 'Section 19(2) Immigration Act', category: 'Work' },
+      { id: 'intra-company-transfer', name: 'Intra-Company Transfer Visa', description: 'For employees of multinational companies being transferred to a South African branch, subsidiary, or affiliate of the same employer.', maxDuration: '4 years', legalReference: 'Section 19(6) Immigration Act', category: 'Work' },
+      { id: 'business-visa', name: 'Business Visa', description: 'For foreign nationals intending to establish or invest in a business in South Africa. Requires a minimum capital contribution and must employ South African citizens.', maxDuration: '3 years', legalReference: 'Section 15 Immigration Act', category: 'Business' },
+      { id: 'study-visa', name: 'Study Visa', description: 'For foreign nationals accepted at a registered South African learning institution. Allows full-time study and limited part-time work during term.', maxDuration: 'Duration of study', legalReference: 'Section 13 Immigration Act', category: 'Study' },
+      { id: 'relatives-visa', name: 'Relatives Visa', description: 'For immediate family members of South African citizens or permanent residents, including spouses, children, and dependent parents.', maxDuration: '2 years', legalReference: 'Section 18 Immigration Act', category: 'Family' },
+      { id: 'spousal-visa', name: 'Spousal Life Partner Visa', description: 'For spouses or life partners in a relationship with a South African citizen or permanent resident. Proof of genuine relationship required.', maxDuration: '2 years', legalReference: 'Section 11(6) Immigration Act', category: 'Family' },
+      { id: 'retired-persons', name: 'Retired Persons Visa', description: 'For foreign retirees with a proven minimum income or retirement savings. Applicants must demonstrate financial self-sufficiency without employment.', maxDuration: '4 years', legalReference: 'Section 20 Immigration Act', category: 'Retirement' },
+      { id: 'visitor-visa', name: 'Visitor Visa', description: 'For tourism, family visits, or short-term business activities. Does not permit employment or long-term study in South Africa.', maxDuration: '90 days', legalReference: 'Section 11 Immigration Act', category: 'Visitor' },
+      { id: 'medical-treatment', name: 'Medical Treatment Visa', description: 'For foreign nationals seeking medical treatment in South Africa. Requires confirmation from a registered South African medical facility.', maxDuration: '6 months', legalReference: 'Section 17 Immigration Act', category: 'Medical' },
+    ],
+  },
+  skills: {
+    categories: [
+      {
+        category: 'Engineering',
+        skills: [
+          { title: 'Civil Engineer', ofoCode: '214201', qualificationRequired: 'BSc/BEng Civil Engineering', professionalBody: 'ECSA' },
+          { title: 'Electrical Engineer', ofoCode: '214101', qualificationRequired: 'BSc/BEng Electrical Engineering', professionalBody: 'ECSA' },
+          { title: 'Mechanical Engineer', ofoCode: '214401', qualificationRequired: 'BSc/BEng Mechanical Engineering', professionalBody: 'ECSA' },
+          { title: 'Chemical Engineer', ofoCode: '214501', qualificationRequired: 'BSc/BEng Chemical Engineering', professionalBody: 'ECSA' },
+          { title: 'Industrial Engineer', ofoCode: '214901', qualificationRequired: 'BSc/BEng Industrial Engineering', professionalBody: 'ECSA' },
+          { title: 'Mining Engineer', ofoCode: '214601', qualificationRequired: 'BSc/BEng Mining Engineering', professionalBody: 'ECSA' },
+          { title: 'Electronics Engineer', ofoCode: '214301', qualificationRequired: 'BSc/BEng Electronics Engineering', professionalBody: 'ECSA' },
+        ],
+      },
+      {
+        category: 'Healthcare',
+        skills: [
+          { title: 'Medical Practitioner (General)', ofoCode: '221101', qualificationRequired: 'MBChB or equivalent', professionalBody: 'HPCSA' },
+          { title: 'Medical Specialist', ofoCode: '221201', qualificationRequired: 'MBChB + Specialist qualification', professionalBody: 'HPCSA' },
+          { title: 'Dentist', ofoCode: '221301', qualificationRequired: 'BChD or equivalent', professionalBody: 'HPCSA' },
+          { title: 'Pharmacist', ofoCode: '226201', qualificationRequired: 'BPharm or equivalent', professionalBody: 'SAPC' },
+          { title: 'Clinical Psychologist', ofoCode: '222101', qualificationRequired: 'Masters in Clinical Psychology', professionalBody: 'HPCSA' },
+          { title: 'Registered Nurse', ofoCode: '222101', qualificationRequired: 'BCur or equivalent Nursing degree', professionalBody: 'SANC' },
+          { title: 'Physiotherapist', ofoCode: '226301', qualificationRequired: 'BSc Physiotherapy', professionalBody: 'HPCSA' },
+        ],
+      },
+      {
+        category: 'Information Technology',
+        skills: [
+          { title: 'Software Developer', ofoCode: '251201', qualificationRequired: 'BSc Computer Science or IT degree', professionalBody: '' },
+          { title: 'ICT Security Specialist', ofoCode: '252901', qualificationRequired: 'BSc Computer Science + Security certification', professionalBody: '' },
+          { title: 'Systems Analyst', ofoCode: '251101', qualificationRequired: 'BSc Computer Science or Information Systems', professionalBody: '' },
+          { title: 'Data Scientist', ofoCode: '251202', qualificationRequired: 'BSc/MSc in Data Science, Statistics, or Computer Science', professionalBody: '' },
+          { title: 'Network Engineer', ofoCode: '252301', qualificationRequired: 'BSc IT or Computer Engineering', professionalBody: '' },
+          { title: 'DevOps Engineer', ofoCode: '251203', qualificationRequired: 'BSc Computer Science or IT degree', professionalBody: '' },
+        ],
+      },
+      {
+        category: 'Finance and Accounting',
+        skills: [
+          { title: 'Chartered Accountant', ofoCode: '241101', qualificationRequired: 'BCom Accounting + CTA + Board Exam', professionalBody: 'SAICA' },
+          { title: 'External Auditor', ofoCode: '241201', qualificationRequired: 'BCom Accounting + CTA + IRBA Board Exam', professionalBody: 'IRBA' },
+          { title: 'Actuary', ofoCode: '212101', qualificationRequired: 'BSc Actuarial Science + Fellowship', professionalBody: 'ASSA' },
+          { title: 'Financial Analyst', ofoCode: '241301', qualificationRequired: 'BCom Finance or CFA qualification', professionalBody: 'SAICA' },
+        ],
+      },
+      {
+        category: 'Sciences',
+        skills: [
+          { title: 'Geologist', ofoCode: '211401', qualificationRequired: 'BSc/MSc Geology', professionalBody: 'SACNASP' },
+          { title: 'Physicist', ofoCode: '211101', qualificationRequired: 'MSc/PhD Physics', professionalBody: 'SACNASP' },
+          { title: 'Biotechnologist', ofoCode: '213201', qualificationRequired: 'BSc/MSc Biotechnology', professionalBody: 'SACNASP' },
+          { title: 'Meteorologist', ofoCode: '211201', qualificationRequired: 'BSc Meteorology or Atmospheric Science', professionalBody: 'SACNASP' },
+          { title: 'Environmental Scientist', ofoCode: '213301', qualificationRequired: 'BSc Environmental Science', professionalBody: 'SACNASP' },
+        ],
+      },
+    ],
+  },
+  fees: {
+    fees: {
+      'Work Visas': [
+        { name: 'Critical Skills Work Visa', amount: 'R1 520' },
+        { name: 'General Work Visa', amount: 'R1 520' },
+        { name: 'Intra-Company Transfer Visa', amount: 'R1 520' },
+        { name: 'Corporate Visa', amount: 'R1 520' },
+      ],
+      'Business and Study Visas': [
+        { name: 'Business Visa', amount: 'R1 520' },
+        { name: 'Study Visa', amount: 'R860' },
+        { name: 'Exchange Visa', amount: 'R860' },
+      ],
+      'Family and Personal Visas': [
+        { name: 'Relatives Visa', amount: 'R1 520' },
+        { name: 'Spousal / Life Partner Visa', amount: 'R1 520' },
+        { name: 'Retired Persons Visa', amount: 'R1 520' },
+        { name: 'Medical Treatment Visa', amount: 'R860' },
+      ],
+      'Visitor Visas': [
+        { name: 'Visitor Visa (Tourism)', amount: 'R425' },
+        { name: 'Visitor Visa (Business)', amount: 'R425' },
+      ],
+      'Permanent Residence': [
+        { name: 'Permanent Residence Permit', amount: 'R4 080' },
+        { name: 'PR - Critical Skills (Section 27b)', amount: 'R4 080' },
+        { name: 'PR - Spousal (Section 26a)', amount: 'R4 080' },
+      ],
+      'Other Services': [
+        { name: 'Waiver Application', amount: 'R1 520' },
+        { name: 'Appeal (Immigration)', amount: 'R1 520' },
+        { name: 'Certification of Documents', amount: 'R120' },
+        { name: 'Premium Processing (VFS)', amount: 'R1 350' },
+      ],
+    },
+  },
+  times: {
+    processingTimes: [
+      { category: 'Critical Skills Work Visa', standard: '8-12 weeks', expedited: '4-6 weeks (premium)' },
+      { category: 'General Work Visa', standard: '8-16 weeks', expedited: '6-8 weeks (premium)' },
+      { category: 'Intra-Company Transfer Visa', standard: '8-12 weeks', expedited: '4-6 weeks (premium)' },
+      { category: 'Business Visa', standard: '8-12 weeks', expedited: null },
+      { category: 'Study Visa', standard: '6-10 weeks', expedited: null },
+      { category: 'Relatives Visa', standard: '8-12 weeks', expedited: null },
+      { category: 'Spousal / Life Partner Visa', standard: '8-16 weeks', expedited: null },
+      { category: 'Retired Persons Visa', standard: '8-12 weeks', expedited: null },
+      { category: 'Visitor Visa', standard: '5-10 working days', expedited: '3-5 days (premium)' },
+      { category: 'Permanent Residence Permit', standard: '12-24 months', expedited: null },
+      { category: 'SAQA Evaluation', standard: '8-12 weeks', expedited: null },
+      { category: 'Police Clearance (SAPS)', standard: '2-4 weeks', expedited: null },
+    ],
+  },
+  offices: {
+    offices: {
+      'Head Office': [
+        {
+          name: 'Department of Home Affairs - Head Office',
+          address: '230 Johannes Ramokhoase (Proes) Street, Pretoria, 0001',
+          hours: 'Mon-Fri: 08:00 - 15:30',
+          phone: '+27 12 406 2500',
+        },
+      ],
+      'Regional Offices': [
+        {
+          name: 'DHA Cape Town Regional Office',
+          address: '56 Barrack Street, Cape Town, 8001',
+          hours: 'Mon-Fri: 08:00 - 15:30',
+          phone: '+27 21 488 1700',
+        },
+        {
+          name: 'DHA Johannesburg Regional Office',
+          address: 'Harrison Street, Johannesburg CBD, 2001',
+          hours: 'Mon-Fri: 08:00 - 15:30',
+          phone: '+27 11 836 3228',
+        },
+        {
+          name: 'DHA Durban Regional Office',
+          address: '221 Anton Lembede Street, Durban, 4001',
+          hours: 'Mon-Fri: 08:00 - 15:30',
+          phone: '+27 31 362 1016',
+        },
+      ],
+      'VFS Global Centres': [
+        {
+          name: 'VFS Global Pretoria',
+          address: 'Brooklyn Mall, Bronkhorst Street, Pretoria, 0181',
+          hours: 'Mon-Fri: 08:00 - 16:00',
+          phone: '+27 12 425 3000',
+        },
+        {
+          name: 'VFS Global Cape Town',
+          address: '2 Long Street, Cape Town, 8001',
+          hours: 'Mon-Fri: 08:00 - 16:00',
+          phone: '+27 21 403 6700',
+        },
+        {
+          name: 'VFS Global Johannesburg',
+          address: 'Rivonia Village, Rivonia Boulevard, Sandton, 2128',
+          hours: 'Mon-Fri: 08:00 - 16:00',
+          phone: '+27 11 234 5600',
+        },
+        {
+          name: 'VFS Global Durban',
+          address: '320 West Street, Durban, 4001',
+          hours: 'Mon-Fri: 08:00 - 16:00',
+          phone: '+27 31 301 3400',
+        },
+      ],
+    },
+  },
+  bodies: {
+    bodies: [
+      { name: 'Health Professions Council of South Africa', abbreviation: 'HPCSA', field: 'Medical Practitioners, Dentists, Psychologists, Physiotherapists', registrationTime: '8-16 weeks', website: 'https://www.hpcsa.co.za' },
+      { name: 'Engineering Council of South Africa', abbreviation: 'ECSA', field: 'All Engineering Disciplines', registrationTime: '6-12 weeks', website: 'https://www.ecsa.co.za' },
+      { name: 'South African Institute of Chartered Accountants', abbreviation: 'SAICA', field: 'Chartered Accountants, Financial Professionals', registrationTime: '4-8 weeks', website: 'https://www.saica.co.za' },
+      { name: 'South African Pharmacy Council', abbreviation: 'SAPC', field: 'Pharmacists, Pharmacy Technicians', registrationTime: '8-12 weeks', website: 'https://www.pharmcouncil.co.za' },
+      { name: 'South African Nursing Council', abbreviation: 'SANC', field: 'Registered Nurses, Enrolled Nurses, Midwives', registrationTime: '12-20 weeks', website: 'https://www.sanc.co.za' },
+      { name: 'South African Council for Natural Scientific Professions', abbreviation: 'SACNASP', field: 'Geologists, Physicists, Biotechnologists, Environmental Scientists', registrationTime: '6-10 weeks', website: 'https://www.sacnasp.org.za' },
+      { name: 'Independent Regulatory Board for Auditors', abbreviation: 'IRBA', field: 'External Auditors', registrationTime: '4-8 weeks', website: 'https://www.irba.co.za' },
+      { name: 'Actuarial Society of South Africa', abbreviation: 'ASSA', field: 'Actuaries', registrationTime: '4-6 weeks', website: 'https://www.actuarialsociety.org.za' },
+      { name: 'South African Qualifications Authority', abbreviation: 'SAQA', field: 'Foreign Qualification Evaluation', registrationTime: '8-12 weeks', website: 'https://www.saqa.org.za' },
+      { name: 'Law Society of South Africa', abbreviation: 'LSSA', field: 'Legal Practitioners, Attorneys, Advocates', registrationTime: '8-14 weeks', website: 'https://www.lssa.org.za' },
+      { name: 'South African Veterinary Council', abbreviation: 'SAVC', field: 'Veterinarians, Veterinary Specialists', registrationTime: '6-10 weeks', website: 'https://www.savc.org.za' },
+      { name: 'South African Council for Educators', abbreviation: 'SACE', field: 'Teachers, Education Professionals', registrationTime: '6-8 weeks', website: 'https://www.sace.org.za' },
+      { name: 'South African Council for the Architectural Profession', abbreviation: 'SACAP', field: 'Architects, Senior Architectural Technologists', registrationTime: '8-12 weeks', website: 'https://www.sacapsa.com' },
+    ],
+  },
+  faq: {
+    categories: [
+      {
+        category: 'General Immigration',
+        questions: [
+          { question: 'What is the difference between a visa and a permit in South Africa?', answer: 'In South African immigration law, a "visa" is issued for temporary residence (work, study, visit), while a "permit" generally refers to permanent residence. Temporary visas are governed by Sections 11-22 of the Immigration Act, and permanent residence is governed by Sections 25-27.', legalReference: 'Immigration Act 13 of 2002' },
+          { question: 'Can I apply for a visa from inside South Africa?', answer: 'Yes, in most cases you can apply for a change of status (switching visa types) while inside South Africa. Applications are submitted through VFS Global centres. However, first-time applicants from abroad must apply at a South African embassy or consulate in their home country.', legalReference: 'Section 10 Immigration Act' },
+          { question: 'How long can I stay in South Africa on a visitor visa?', answer: 'Visitor visas are typically issued for up to 90 days. Citizens of visa-exempt countries receive a port-of-entry visa valid for 90 days. Extensions of up to 90 additional days can be applied for at a VFS Global centre before the current visa expires.', legalReference: 'Section 11 Immigration Act' },
+          { question: 'What happens if my visa expires while I am in South Africa?', answer: 'Overstaying your visa is a serious offence. You may be declared an undesirable person, banned from re-entering South Africa for 1-5 years, detained, or deported. It is critical to apply for renewal or extension before your current visa expires.', legalReference: 'Section 30 Immigration Act' },
+        ],
+      },
+      {
+        category: 'Work Visas',
+        questions: [
+          { question: 'What is the Critical Skills Work Visa and who qualifies?', answer: 'The Critical Skills Work Visa is for foreign nationals who possess skills listed on the government\'s Critical Skills List. Applicants must hold appropriate qualifications evaluated by SAQA and, where applicable, be registered with a relevant South African professional body. Unlike the General Work Visa, a prior job offer is not required at the time of application.', legalReference: 'Section 19(4) Immigration Act' },
+          { question: 'Do I need a job offer to apply for a Critical Skills Visa?', answer: 'No, you do not need a job offer to apply. However, if you do not have a job offer at the time of application, you must prove that you secured employment within 12 months of the visa being issued. Failure to do so may result in the visa being revoked.', legalReference: 'Section 19(4) Immigration Act' },
+          { question: 'What is a labour market test for the General Work Visa?', answer: 'The employer must prove to the Department of Labour that they were unable to find a suitable South African citizen or permanent resident for the position. This involves advertising the position in specific media and providing evidence that no qualified local candidates applied.', legalReference: 'Section 19(2) Immigration Act' },
+          { question: 'Can I change employers on a work visa?', answer: 'Work visas are generally employer-specific. If you wish to change employers, you must apply for a new work visa with the new employer\'s details. Working for an unauthorized employer can result in visa cancellation and potential deportation.', legalReference: 'Immigration Regulations, 2014' },
+        ],
+      },
+      {
+        category: 'Permanent Residence',
+        questions: [
+          { question: 'How do I qualify for permanent residence in South Africa?', answer: 'Permanent residence can be obtained through several categories: holding a Critical Skills Work Visa for 5 years (Section 27b), being married to a South African citizen for 5 years (Section 26a), having a general work visa for 5 years (Section 26a), as a retired person (Section 27c), or by making a qualifying financial contribution/investment (Section 27d).', legalReference: 'Sections 25-27 Immigration Act' },
+          { question: 'How long does permanent residence take to process?', answer: 'Permanent residence applications typically take 12-24 months to process, although some cases may take longer. Applications are submitted through VFS Global and processed by the Department of Home Affairs in Pretoria.', legalReference: 'Immigration Regulations, 2014' },
+          { question: 'Can permanent residence be revoked?', answer: 'Yes, permanent residence can be revoked if the holder is absent from South Africa for more than 3 consecutive years, if the permit was obtained fraudulently, or if the holder is convicted of a serious criminal offence.', legalReference: 'Section 28 Immigration Act' },
+        ],
+      },
+      {
+        category: 'Documents and Requirements',
+        questions: [
+          { question: 'What is a SAQA evaluation and why do I need one?', answer: 'The South African Qualifications Authority (SAQA) evaluates foreign qualifications to determine their South African equivalent. This is required for most work and permanent residence visa applications to verify that your qualifications meet the standards expected for your occupation.', legalReference: 'National Qualifications Framework Act 67 of 2008' },
+          { question: 'How do I get a police clearance certificate?', answer: 'You need a police clearance certificate from every country where you have resided for 12 or more months in the past 10 years. Contact the relevant country\'s police service or embassy. South African police clearance is obtained from SAPS Criminal Record Centre. These certificates must be less than 6 months old at time of submission.', legalReference: 'Immigration Regulations, 2014' },
+          { question: 'Do my documents need to be translated or apostilled?', answer: 'All documents not in English must be translated by a sworn translator. Documents from countries that are party to the Hague Apostille Convention must be apostilled. Documents from non-Hague countries must be authenticated/legalized by the relevant South African embassy or consulate.', legalReference: 'Immigration Regulations, 2014' },
+        ],
+      },
+      {
+        category: 'Fees and Processing',
+        questions: [
+          { question: 'How much does a work visa cost in South Africa?', answer: 'Work visa application fees are R1,520 for most categories (Critical Skills, General Work, Intra-Company Transfer). VFS Global service fees are additional and vary by location. Premium/priority processing through VFS costs an extra R1,350 where available.', legalReference: 'Immigration Regulations, Schedule of Fees' },
+          { question: 'Can I track my visa application status?', answer: 'Yes, you can track your application through the VFS Global website using your reference number. You can also contact the DHA call centre at 0800 60 11 90 for status updates. Processing times vary by visa type and current workload.', legalReference: null },
+          { question: 'What if my visa application is rejected?', answer: 'If your visa application is refused, you have the right to appeal within 10 working days of receiving the decision. Appeals are submitted to the Director-General of Home Affairs. You may also apply for a review of the decision through the Immigration Advisory Board or approach the courts for judicial review.', legalReference: 'Section 8 Immigration Act' },
+        ],
+      },
+    ],
+  },
+};
+
 const TABS = [
   { id: 'overview', label: 'Overview' },
   { id: 'visas', label: 'All Visas' },
@@ -45,7 +297,11 @@ export default function KnowledgeHub() {
         default: result = { data: {} };
       }
       setData(prev => ({ ...prev, [t]: result.data }));
-    } catch {}
+    } catch {
+      if (FALLBACK_DATA[t]) {
+        setData(prev => ({ ...prev, [t]: FALLBACK_DATA[t] }));
+      }
+    }
     setLoading(false);
   }
 
