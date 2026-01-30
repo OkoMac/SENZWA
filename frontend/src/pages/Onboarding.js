@@ -213,7 +213,7 @@ const s = {
   dot: { width: 32, height: 32, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, flexShrink: 0, transition: 'all 0.3s' },
   dotLabel: { fontSize: 11, fontWeight: 600, marginLeft: 6, letterSpacing: '0.02em', whiteSpace: 'nowrap' },
   progressLine: { width: 40, height: 2, borderRadius: 2, margin: '0 8px', transition: 'background 0.3s' },
-  card: { background: '#1a1a1d', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 20, padding: '36px 32px' },
+  card: { background: 'rgba(26,26,29,0.6)', backdropFilter: 'blur(20px) saturate(180%)', WebkitBackdropFilter: 'blur(20px) saturate(180%)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 20, padding: '36px 32px' },
   title: { fontSize: 22, fontWeight: 800, color: '#fafafa', letterSpacing: '-0.02em', marginBottom: 6 },
   subtitle: { fontSize: 14, color: '#a1a1aa', marginBottom: 28 },
   error: { background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444', padding: '10px 14px', borderRadius: 10, fontSize: 13, marginBottom: 20 },

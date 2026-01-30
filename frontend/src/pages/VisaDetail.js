@@ -133,7 +133,7 @@ const s = {
   heroMeta: { display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' },
   metaBadge: { padding: '5px 14px', borderRadius: 999, fontSize: 12, fontWeight: 600 },
   legalRef: { fontSize: 12, color: '#52525b', fontStyle: 'italic' },
-  section: { background: '#1a1a1d', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: '28px 24px', marginBottom: 16 },
+  section: { background: 'rgba(26,26,29,0.6)', backdropFilter: 'blur(20px) saturate(180%)', WebkitBackdropFilter: 'blur(20px) saturate(180%)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: '28px 24px', marginBottom: 16 },
   sectionTitle: { fontSize: 17, fontWeight: 700, color: '#fafafa', marginBottom: 16 },
   listWrap: { display: 'flex', flexDirection: 'column', gap: 8 },
   listItem: { display: 'flex', gap: 10, alignItems: 'flex-start' },
