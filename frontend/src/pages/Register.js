@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import Logo from '../components/Logo';
 
 export default function Register() {
   const navigate = useNavigate();
@@ -32,7 +33,7 @@ export default function Register() {
       <div style={s.container}>
         <div style={s.card}>
           <div style={s.header}>
-            <img src="/logo-dark.svg" alt="Senzwa" style={{ height: 40, marginBottom: 12 }} />
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}><Logo height={36} /></div>
             <h1 style={s.title}>Create your account</h1>
             <p style={s.subtitle}>Start your South African migration journey</p>
           </div>
