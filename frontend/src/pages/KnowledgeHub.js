@@ -1,1103 +1,424 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { knowledgeAPI } from '../services/api';
 
-const API = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const TABS = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'visas', label: 'All Visas' },
+  { id: 'skills', label: 'Critical Skills' },
+  { id: 'country', label: 'Country Check' },
+  { id: 'docs', label: 'Documents' },
+  { id: 'fees', label: 'Fees' },
+  { id: 'times', label: 'Processing Times' },
+  { id: 'offices', label: 'Offices' },
+  { id: 'bodies', label: 'Professional Bodies' },
+  { id: 'faq', label: 'FAQ' },
+];
 
 export default function KnowledgeHub() {
-  const [activeTab, setActiveTab] = useState('overview');
+  const [tab, setTab] = useState('overview');
   const [data, setData] = useState({});
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [countryInput, setCountryInput] = useState('');
-  const [countryResult, setCountryResult] = useState(null);
-  const [expandedFAQ, setExpandedFAQ] = useState(null);
-  const [expandedSkillCat, setExpandedSkillCat] = useState(null);
+  const [countryData, setCountryData] = useState(null);
+  const [expandedFaq, setExpandedFaq] = useState(null);
 
   useEffect(() => {
-    loadData();
-  }, []);
+    loadTab(tab);
+  }, [tab]);
 
-  async function loadData() {
+  async function loadTab(t) {
+    if (data[t]) return;
+    setLoading(true);
     try {
-      const [overview, categories, skills, times, fees, offices, bodies, faq, exempt] = await Promise.all([
-        fetchJSON('/knowledge/overview'),
-        fetchJSON('/knowledge/visa-categories'),
-        fetchJSON('/knowledge/critical-skills'),
-        fetchJSON('/knowledge/processing-times'),
-        fetchJSON('/knowledge/fees'),
-        fetchJSON('/knowledge/dha-offices'),
-        fetchJSON('/knowledge/professional-bodies'),
-        fetchJSON('/knowledge/faq'),
-        fetchJSON('/knowledge/visa-exempt-countries'),
-      ]);
-      setData({ overview, categories, skills, times, fees, offices, bodies, faq, exempt });
-    } catch (err) {
-      console.error('Failed to load knowledge base', err);
-    }
+      let result;
+      switch (t) {
+        case 'overview': result = await knowledgeAPI.getOverview(); break;
+        case 'visas': result = await knowledgeAPI.getVisaCategories(); break;
+        case 'skills': result = await knowledgeAPI.getCriticalSkills(); break;
+        case 'fees': result = await knowledgeAPI.getFees(); break;
+        case 'times': result = await knowledgeAPI.getProcessingTimes(); break;
+        case 'offices': result = await knowledgeAPI.getDHAOffices(); break;
+        case 'bodies': result = await knowledgeAPI.getProfessionalBodies(); break;
+        case 'faq': result = await knowledgeAPI.getFAQ(); break;
+        default: result = { data: {} };
+      }
+      setData(prev => ({ ...prev, [t]: result.data }));
+    } catch {}
     setLoading(false);
-  }
-
-  async function fetchJSON(path) {
-    const res = await fetch(`${API}${path}`);
-    return res.json();
   }
 
   async function lookupCountry() {
     if (!countryInput.trim()) return;
+    setLoading(true);
     try {
-      const res = await fetch(`${API}/knowledge/country/${encodeURIComponent(countryInput.trim())}`);
-      setCountryResult(await res.json());
-    } catch {
-      setCountryResult({ error: 'Lookup failed' });
-    }
+      const res = await knowledgeAPI.getCountryRequirements(countryInput);
+      setCountryData(res.data);
+    } catch { setCountryData({ error: 'Country not found' }); }
+    setLoading(false);
   }
 
-  if (loading) return <div style={s.loading}>Loading Knowledge Hub...</div>;
-
-  const tabs = [
-    { id: 'overview', label: 'Overview' },
-    { id: 'visas', label: 'All Visa Types' },
-    { id: 'criticalskills', label: 'Critical Skills' },
-    { id: 'country', label: 'Country Check' },
-    { id: 'documents', label: 'Documents Guide' },
-    { id: 'fees', label: 'Fees & Costs' },
-    { id: 'processing', label: 'Processing Times' },
-    { id: 'offices', label: 'Offices & Centres' },
-    { id: 'profbodies', label: 'Professional Bodies' },
-    { id: 'faq', label: 'FAQ' },
-  ];
+  const Loader = () => <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}><div className="spinner" /></div>;
 
   return (
     <div style={s.page}>
-      <div style={s.container}>
-        <div style={s.header}>
-          <h1 style={s.title}>Immigration Knowledge Hub</h1>
-          <p style={s.subtitle}>
-            Everything you need to know about South African immigration - all in one place.
-            You never need to leave Senzwa for information.
-          </p>
-        </div>
+      <div className="container">
+        <h1 style={s.title}>Knowledge Hub</h1>
+        <p style={s.subtitle}>Complete self-service reference for South African immigration. Everything you need, in one place.</p>
 
-        {/* Tab Navigation */}
-        <div style={s.tabBar}>
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              style={{ ...s.tab, ...(activeTab === tab.id ? s.tabActive : {}) }}
-              onClick={() => setActiveTab(tab.id)}
-            >
-              {tab.label}
+        {/* Tabs */}
+        <div style={s.tabs}>
+          {TABS.map(t => (
+            <button key={t.id} onClick={() => setTab(t.id)} style={{ ...s.tabBtn, ...(tab === t.id ? s.tabActive : {}) }}>
+              {t.label}
             </button>
           ))}
         </div>
 
-        {/* Tab Content */}
-        <div style={s.content}>
-          {activeTab === 'overview' && renderOverview()}
-          {activeTab === 'visas' && renderVisas()}
-          {activeTab === 'criticalskills' && renderCriticalSkills()}
-          {activeTab === 'country' && renderCountryCheck()}
-          {activeTab === 'documents' && renderDocumentsGuide()}
-          {activeTab === 'fees' && renderFees()}
-          {activeTab === 'processing' && renderProcessingTimes()}
-          {activeTab === 'offices' && renderOffices()}
-          {activeTab === 'profbodies' && renderProfBodies()}
-          {activeTab === 'faq' && renderFAQ()}
-        </div>
-      </div>
-    </div>
-  );
-
-  // === OVERVIEW TAB ===
-  function renderOverview() {
-    const o = data.overview || {};
-    return (
-      <div>
-        <div style={s.statsGrid}>
-          {[
-            { label: 'Visa Categories', value: o.visaCategories || 0, color: '#1a5632' },
-            { label: 'Critical Skills', value: o.totalCriticalSkills || 0, color: '#002395' },
-            { label: 'Exempt Countries', value: o.exemptCountries || 0, color: '#d4a843' },
-            { label: 'DHA/VFS Offices', value: o.dhaOffices || 0, color: '#17a2b8' },
-            { label: 'Professional Bodies', value: o.professionalBodies || 0, color: '#6f42c1' },
-            { label: 'FAQ Answers', value: o.totalFAQs || 0, color: '#28a745' },
-          ].map((stat, i) => (
-            <div key={i} style={s.statCard}>
-              <div style={{ ...s.statValue, color: stat.color }}>{stat.value}</div>
-              <div style={s.statLabel}>{stat.label}</div>
-            </div>
-          ))}
-        </div>
-
-        <div style={s.section}>
-          <h2 style={s.sectionTitle}>What You'll Find Here</h2>
-          <div style={s.featureGrid}>
-            {[
-              { title: 'All Visa Types', desc: 'Complete details for every DHA visa and permit category including eligibility, documents, fees, and legal references.', tab: 'visas' },
-              { title: 'Critical Skills List', desc: 'Full list of occupations on the Critical Skills List with OFO codes, qualification requirements, and professional body details.', tab: 'criticalskills' },
-              { title: 'Country-Specific Requirements', desc: 'Check your country\'s visa exemption status, yellow fever requirements, document legalization process, and more.', tab: 'country' },
-              { title: 'Document Requirements', desc: 'Comprehensive guide to every document type - what it is, where to get it, how old it can be, and tips for preparation.', tab: 'documents' },
-              { title: 'Fees & Costs', desc: 'Complete fee schedule including DHA fees, VFS charges, SAQA evaluation costs, and other expenses.', tab: 'fees' },
-              { title: 'Processing Times', desc: 'Expected processing times for every visa category with tips for avoiding delays.', tab: 'processing' },
-              { title: 'Offices & Centres', desc: 'Find VFS Global centres, DHA offices, and Refugee Reception Offices with addresses and operating hours.', tab: 'offices' },
-              { title: 'Professional Bodies', desc: 'Complete list of South African professional registration bodies with websites and registration timelines.', tab: 'profbodies' },
-              { title: 'FAQ', desc: 'Answers to the most common immigration questions - from documents to processes to legal requirements.', tab: 'faq' },
-            ].map((feat, i) => (
-              <div key={i} style={s.featureCard} onClick={() => setActiveTab(feat.tab)}>
-                <h3 style={s.featureTitle}>{feat.title}</h3>
-                <p style={s.featureDesc}>{feat.desc}</p>
-                <span style={s.featureLink}>Explore &rarr;</span>
+        {loading && !data[tab] ? <Loader /> : (
+          <div>
+            {/* Overview */}
+            {tab === 'overview' && data.overview && (
+              <div>
+                <div style={s.statsGrid}>
+                  {[
+                    { n: data.overview.totalVisaCategories || '22+', l: 'Visa Categories' },
+                    { n: data.overview.totalCriticalSkills || '80+', l: 'Critical Skills' },
+                    { n: '130+', l: 'Countries Covered' },
+                    { n: '13', l: 'Professional Bodies' },
+                  ].map((st, i) => (
+                    <div key={i} style={s.statCard}><span style={s.statNum}>{st.n}</span><span style={s.statLabel}>{st.l}</span></div>
+                  ))}
+                </div>
+                <div style={s.quickLinks}>
+                  {TABS.slice(1).map(t => (
+                    <button key={t.id} onClick={() => setTab(t.id)} style={s.quickBtn}>{t.label}<span style={s.quickArrow}>&rarr;</span></button>
+                  ))}
+                </div>
               </div>
-            ))}
-          </div>
-        </div>
+            )}
 
-        <div style={s.legalBox}>
-          <strong>Legal Basis:</strong> All information is grounded in the Immigration Act 13 of 2002 (as amended), Immigration Regulations 2014, DHA Policy Directives, and the Refugees Act 130 of 1998.
-          <br /><br />
-          <strong>Disclaimer:</strong> Senzwa provides guidance only. All final visa decisions are made by the Department of Home Affairs. Information is updated regularly but applicants should verify current requirements with DHA or VFS Global.
-        </div>
-      </div>
-    );
-  }
+            {/* All Visas */}
+            {tab === 'visas' && data.visas && (
+              <div>
+                <input type="text" placeholder="Search visa categories..." value={search} onChange={e => setSearch(e.target.value)} style={s.searchInput} />
+                <div style={s.visaGrid}>
+                  {(data.visas.categories || []).filter(c => !search || c.name.toLowerCase().includes(search.toLowerCase())).map(c => (
+                    <Link key={c.id} to={`/visas/${c.id}`} style={s.visaCard}>
+                      <h3 style={s.visaName}>{c.name}</h3>
+                      <p style={s.visaDesc}>{c.description}</p>
+                      <div style={s.visaMeta}><span style={s.visaDur}>{c.maxDuration}</span><span style={s.visaRef}>{c.legalReference}</span></div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
 
-  // === ALL VISA TYPES TAB ===
-  function renderVisas() {
-    const cats = data.categories?.categories || [];
-    const groups = data.categories?.groups || [];
-
-    const filtered = search
-      ? cats.filter((c) =>
-          c.name.toLowerCase().includes(search.toLowerCase()) ||
-          c.description.toLowerCase().includes(search.toLowerCase())
-        )
-      : cats;
-
-    const groupColors = {
-      temporary_residence: '#17a2b8',
-      work_permit: '#1a5632',
-      family: '#d4a843',
-      permanent_residence: '#002395',
-      refugee: '#6c757d',
-    };
-
-    return (
-      <div>
-        <input
-          type="text"
-          placeholder="Search all visa categories..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={s.searchInput}
-        />
-
-        {groups.map((group) => {
-          const groupCats = filtered.filter((c) => c.category === group.id);
-          if (groupCats.length === 0) return null;
-
-          return (
-            <div key={group.id} style={s.section}>
-              <h2 style={{ ...s.sectionTitle, color: groupColors[group.id] || '#212529' }}>
-                {group.name} ({groupCats.length})
-              </h2>
-              <p style={s.sectionDesc}>{group.description}</p>
-
-              {groupCats.map((cat) => (
-                <div key={cat.id} style={s.visaCard}>
-                  <div style={s.visaCardHeader}>
-                    <h3 style={s.visaCardTitle}>{cat.name}</h3>
-                    <span style={{
-                      ...s.badge,
-                      background: (groupColors[cat.category] || '#6c757d') + '18',
-                      color: groupColors[cat.category] || '#6c757d',
-                    }}>
-                      {cat.maxDuration}
-                    </span>
-                  </div>
-                  <p style={s.visaCardDesc}>{cat.description}</p>
-                  <div style={s.visaCardLegal}>{cat.legalReference}</div>
-
-                  <div style={s.visaSection}>
-                    <h4 style={s.visaSectionTitle}>Eligibility Requirements</h4>
-                    <ul style={s.list}>
-                      {cat.eligibility.requirements.map((req, i) => (
-                        <li key={i} style={s.listItem}><span style={s.checkIcon}>&#10003;</span> {req}</li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div style={s.visaSection}>
-                    <h4 style={{ ...s.visaSectionTitle, color: '#c4342d' }}>Disqualifying Factors</h4>
-                    <ul style={s.list}>
-                      {cat.eligibility.disqualifiers.map((d, i) => (
-                        <li key={i} style={s.listItem}><span style={s.xIcon}>&#10007;</span> {d}</li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div style={s.visaSection}>
-                    <h4 style={s.visaSectionTitle}>Required Documents</h4>
-                    <div style={s.docGrid}>
-                      {cat.requiredDocuments.map((doc, i) => (
-                        <div key={i} style={{
-                          ...s.docItem,
-                          borderLeft: doc.required ? '3px solid #1a5632' : '3px solid #ced4da',
-                        }}>
-                          <div style={s.docName}>
-                            {doc.name}
-                            {doc.required && <span style={s.requiredBadge}>REQUIRED</span>}
-                            {!doc.required && <span style={s.optionalBadge}>OPTIONAL</span>}
+            {/* Critical Skills */}
+            {tab === 'skills' && data.skills && (
+              <div>
+                <input type="text" placeholder="Search skills (e.g. Software, Nurse, Civil)..." value={search} onChange={e => setSearch(e.target.value)} style={s.searchInput} />
+                {(data.skills.categories || []).map(cat => {
+                  const filtered = (cat.skills || []).filter(sk => !search || sk.title.toLowerCase().includes(search.toLowerCase()) || sk.ofoCode?.includes(search));
+                  if (!filtered.length && search) return null;
+                  return (
+                    <div key={cat.category} style={s.skillSection}>
+                      <h3 style={s.skillCat}>{cat.category} <span style={s.skillCount}>({filtered.length})</span></h3>
+                      <div style={s.skillList}>
+                        {filtered.map((sk, i) => (
+                          <div key={i} style={s.skillRow}>
+                            <div style={s.skillInfo}>
+                              <span style={s.skillTitle}>{sk.title}</span>
+                              <span style={s.skillOfo}>OFO: {sk.ofoCode}</span>
+                            </div>
+                            <div style={s.skillRight}>
+                              <span style={s.skillQual}>{sk.qualificationRequired}</span>
+                              {sk.professionalBody && <span style={s.skillBody}>{sk.professionalBody}</span>}
+                            </div>
                           </div>
-                          <div style={s.docDesc}>{doc.description}</div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  );
+                })}
+              </div>
+            )}
 
-                  <div style={s.visaSection}>
-                    <h4 style={{ ...s.visaSectionTitle, color: '#856404' }}>Common Rejection Reasons</h4>
-                    <ul style={s.list}>
-                      {cat.commonRejectionReasons.map((r, i) => (
-                        <li key={i} style={s.listItem}><span style={s.warnIcon}>&#9888;</span> {r}</li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div style={s.visaCardFooter}>
-                    <span style={s.feeInfo}>Application Fee: {cat.fees?.application || 'See fee schedule'}</span>
-                    <Link to={`/eligibility`} style={s.ctaLink}>Check Your Eligibility &rarr;</Link>
-                  </div>
+            {/* Country Check */}
+            {tab === 'country' && (
+              <div>
+                <div style={s.countrySearch}>
+                  <input type="text" placeholder="Enter country name (e.g. Nigeria, India, UK)..." value={countryInput} onChange={e => setCountryInput(e.target.value)} style={s.searchInput} onKeyDown={e => e.key === 'Enter' && lookupCountry()} />
+                  <button className="btn btn-primary" onClick={lookupCountry}>Check</button>
                 </div>
-              ))}
-            </div>
-          );
-        })}
-      </div>
-    );
-  }
+                {countryData && !countryData.error && (
+                  <div style={s.countryResults}>
+                    <h3 style={s.countryName}>{countryData.country}</h3>
+                    <div style={s.countryGrid}>
+                      <div style={s.countryItem}>
+                        <span style={s.countryLabel}>Visa Exempt</span>
+                        <span style={{ ...s.countryValue, color: countryData.visaExempt ? '#22c55e' : '#ef4444' }}>{countryData.visaExempt ? `Yes (${countryData.exemptDays} days)` : 'No'}</span>
+                      </div>
+                      <div style={s.countryItem}>
+                        <span style={s.countryLabel}>Yellow Fever</span>
+                        <span style={{ ...s.countryValue, color: countryData.yellowFeverRequired ? '#f59e0b' : '#22c55e' }}>{countryData.yellowFeverRequired ? 'Required' : 'Not Required'}</span>
+                      </div>
+                      <div style={s.countryItem}>
+                        <span style={s.countryLabel}>Apostille</span>
+                        <span style={s.countryValue}>{countryData.apostilleCountry ? 'Apostille accepted' : 'Legalization required'}</span>
+                      </div>
+                    </div>
+                    {countryData.notes && <div style={s.countryNotes}><h4 style={s.noteTitle}>Country Notes</h4><p style={s.noteText}>{typeof countryData.notes === 'string' ? countryData.notes : JSON.stringify(countryData.notes)}</p></div>}
+                  </div>
+                )}
+                {countryData?.error && <p style={s.muted}>{countryData.error}</p>}
+              </div>
+            )}
 
-  // === CRITICAL SKILLS TAB ===
-  function renderCriticalSkills() {
-    const skillData = data.skills || { categories: [] };
-    const filtered = search
-      ? {
-          ...skillData,
-          categories: skillData.categories
-            .map((cat) => ({
-              ...cat,
-              skills: cat.skills.filter(
-                (sk) =>
-                  sk.title.toLowerCase().includes(search.toLowerCase()) ||
-                  sk.ofoCode.includes(search) ||
-                  sk.qualificationRequired.toLowerCase().includes(search.toLowerCase())
-              ),
-            }))
-            .filter((cat) => cat.skills.length > 0),
-        }
-      : skillData;
-
-    return (
-      <div>
-        <div style={s.infoBox}>
-          <strong>What is the Critical Skills List?</strong>
-          <p style={{ margin: '0.5rem 0 0' }}>
-            The Critical Skills List identifies occupations in critical demand in South Africa. Foreign nationals with
-            skills on this list may apply for a Critical Skills Work Visa under Section 19(4) of the Immigration Act.
-            Unlike the General Work Visa, a job offer is NOT required at the time of application, but you must find
-            employment within 12 months of the visa being issued.
-          </p>
-        </div>
-
-        <input
-          type="text"
-          placeholder="Search by job title, OFO code, or qualification..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={s.searchInput}
-        />
-
-        <p style={s.resultCount}>
-          Showing {filtered.categories?.reduce((sum, c) => sum + c.skills.length, 0) || 0} skills across {filtered.categories?.length || 0} categories
-        </p>
-
-        {filtered.categories?.map((cat, ci) => (
-          <div key={ci} style={s.section}>
-            <button
-              style={s.skillCatHeader}
-              onClick={() => setExpandedSkillCat(expandedSkillCat === ci ? null : ci)}
-            >
-              <h3 style={s.skillCatTitle}>{cat.category} ({cat.skills.length} skills)</h3>
-              <span style={s.expandIcon}>{expandedSkillCat === ci ? '\u25B2' : '\u25BC'}</span>
-            </button>
-
-            {(expandedSkillCat === ci || search) && (
-              <div style={s.skillTable}>
-                <div style={s.skillTableHeader}>
-                  <span style={{ flex: 1 }}>OFO Code</span>
-                  <span style={{ flex: 2 }}>Job Title</span>
-                  <span style={{ flex: 3 }}>Qualification Required</span>
-                  <span style={{ flex: 2 }}>Professional Body</span>
-                  <span style={{ flex: 1 }}>Min. Experience</span>
-                </div>
-                {cat.skills.map((sk, si) => (
-                  <div key={si} style={s.skillTableRow}>
-                    <span style={{ flex: 1, fontFamily: 'monospace', fontSize: '0.8125rem' }}>{sk.ofoCode}</span>
-                    <span style={{ flex: 2, fontWeight: 600 }}>{sk.title}</span>
-                    <span style={{ flex: 3, fontSize: '0.8125rem' }}>{sk.qualificationRequired}</span>
-                    <span style={{ flex: 2, fontSize: '0.8125rem', color: '#1a5632' }}>{sk.professionalBody}</span>
-                    <span style={{ flex: 1, fontSize: '0.8125rem' }}>{sk.minExperience}</span>
+            {/* Documents Guide */}
+            {tab === 'docs' && (
+              <div style={s.docsGrid}>
+                {[
+                  { name: 'Valid Passport', desc: 'Must have at least 2 blank pages and be valid for 30 days beyond intended stay.', tip: 'Ensure passport is not damaged or altered.' },
+                  { name: 'Police Clearance Certificate', desc: 'From every country lived in for 12+ months in the last 10 years.', tip: 'Must be less than 6 months old at time of submission.' },
+                  { name: 'Medical Report', desc: 'Standard medical examination from a registered medical practitioner.', tip: 'Use DHA-approved forms. Must be recent.' },
+                  { name: 'Radiological Report', desc: 'Chest X-ray for tuberculosis screening from an approved facility.', tip: 'Required for all applicants over 12 years old.' },
+                  { name: 'Proof of Financial Means', desc: 'Bank statements, employment contract, or sponsor letter proving financial capacity.', tip: '3-6 months of bank statements recommended.' },
+                  { name: 'Passport Photos', desc: 'Two recent passport-sized photographs with white background.', tip: '35mm x 45mm, taken within last 6 months.' },
+                  { name: 'SAQA Evaluation', desc: 'South African Qualifications Authority evaluation of foreign qualifications.', tip: 'Apply early - can take 8-12 weeks.' },
+                  { name: 'Yellow Fever Certificate', desc: 'Required if travelling from or transiting through a yellow fever endemic area.', tip: 'Must be vaccinated at least 10 days before arrival.' },
+                ].map((doc, i) => (
+                  <div key={i} style={s.docCard}>
+                    <h3 style={s.docTitle}>{doc.name}</h3>
+                    <p style={s.docDesc}>{doc.desc}</p>
+                    <div style={s.docTip}><span style={s.tipLabel}>TIP:</span> {doc.tip}</div>
                   </div>
                 ))}
               </div>
             )}
-          </div>
-        ))}
-      </div>
-    );
-  }
 
-  // === COUNTRY CHECK TAB ===
-  function renderCountryCheck() {
-    return (
-      <div>
-        <div style={s.infoBox}>
-          <strong>Country-Specific Requirements</strong>
-          <p style={{ margin: '0.5rem 0 0' }}>
-            Enter your country of origin or nationality to see visa exemption status, yellow fever requirements,
-            document legalization requirements, and country-specific notes.
-          </p>
-        </div>
-
-        <div style={s.searchRow}>
-          <input
-            type="text"
-            placeholder="Enter your country (e.g. Nigeria, India, United Kingdom)..."
-            value={countryInput}
-            onChange={(e) => setCountryInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && lookupCountry()}
-            style={{ ...s.searchInput, flex: 1, marginBottom: 0 }}
-          />
-          <button onClick={lookupCountry} className="btn btn-primary" style={{ height: 48 }}>Check Country</button>
-        </div>
-
-        {countryResult && !countryResult.error && (
-          <div style={s.countryResults}>
-            <h3 style={s.countryName}>{countryResult.country}</h3>
-
-            <div style={s.countryGrid}>
-              <div style={{
-                ...s.countryCard,
-                borderLeft: `4px solid ${countryResult.visaExemption.exempt ? '#28a745' : '#dc3545'}`,
-              }}>
-                <h4 style={s.countryCardTitle}>Visa Exemption Status</h4>
-                <div style={{
-                  ...s.statusBadge,
-                  background: countryResult.visaExemption.exempt ? '#d4edda' : '#f8d7da',
-                  color: countryResult.visaExemption.exempt ? '#155724' : '#721c24',
-                }}>
-                  {countryResult.visaExemption.exempt
-                    ? `VISA EXEMPT - ${countryResult.visaExemption.duration}`
-                    : 'VISA REQUIRED'}
-                </div>
-                <p style={s.countryCardText}>
-                  {countryResult.visaExemption.exempt
-                    ? `Citizens can visit South Africa for up to ${countryResult.visaExemption.duration} without a visa for tourism or short business visits.`
-                    : 'Citizens must obtain a visa before traveling to South Africa for any purpose.'}
-                </p>
-              </div>
-
-              <div style={{
-                ...s.countryCard,
-                borderLeft: `4px solid ${countryResult.yellowFever.required ? '#ffc107' : '#28a745'}`,
-              }}>
-                <h4 style={s.countryCardTitle}>Yellow Fever Certificate</h4>
-                <div style={{
-                  ...s.statusBadge,
-                  background: countryResult.yellowFever.required ? '#fff3cd' : '#d4edda',
-                  color: countryResult.yellowFever.required ? '#856404' : '#155724',
-                }}>
-                  {countryResult.yellowFever.required ? 'REQUIRED' : 'NOT REQUIRED'}
-                </div>
-                <p style={s.countryCardText}>{countryResult.yellowFever.details}</p>
-              </div>
-
-              <div style={{
-                ...s.countryCard,
-                borderLeft: '4px solid #17a2b8',
-              }}>
-                <h4 style={s.countryCardTitle}>Document Legalization</h4>
-                <div style={{
-                  ...s.statusBadge,
-                  background: '#d1ecf1',
-                  color: '#0c5460',
-                }}>
-                  {countryResult.documentLegalization.apostilleCountry ? 'APOSTILLE ACCEPTED' : 'EMBASSY LEGALIZATION REQUIRED'}
-                </div>
-                <p style={s.countryCardText}>{countryResult.documentLegalization.process}</p>
-              </div>
-
-              {countryResult.sadc.isMember && (
-                <div style={{ ...s.countryCard, borderLeft: '4px solid #6f42c1' }}>
-                  <h4 style={s.countryCardTitle}>SADC Member State</h4>
-                  <p style={s.countryCardText}>
-                    This country is a member of the Southern African Development Community (SADC).
-                    Special bilateral movement protocols may apply.
-                  </p>
-                </div>
-              )}
-
-              {countryResult.countryNotes && (
-                <div style={{ ...s.countryCard, borderLeft: '4px solid #d4a843', gridColumn: '1 / -1' }}>
-                  <h4 style={s.countryCardTitle}>Country-Specific Notes</h4>
-                  {countryResult.countryNotes.notes && (
-                    <p style={s.countryCardText}>{countryResult.countryNotes.notes}</p>
-                  )}
-                  {countryResult.countryNotes.specialDispensation && (
-                    <p style={{ ...s.countryCardText, fontWeight: 600, color: '#1a5632' }}>
-                      Special Dispensation: {countryResult.countryNotes.specialDispensation}
-                    </p>
-                  )}
-                  {countryResult.countryNotes.additionalRequirements && (
-                    <div style={{ marginTop: '0.5rem' }}>
-                      <strong style={{ fontSize: '0.8125rem' }}>Additional Requirements:</strong>
-                      <ul style={{ ...s.list, marginTop: '0.25rem' }}>
-                        {countryResult.countryNotes.additionalRequirements.map((r, i) => (
-                          <li key={i} style={s.listItem}>{r}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  {countryResult.countryNotes.commonVisaTypes && (
-                    <div style={{ marginTop: '0.5rem' }}>
-                      <strong style={{ fontSize: '0.8125rem' }}>Commonly Applied Visa Types:</strong>
-                      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
-                        {countryResult.countryNotes.commonVisaTypes.map((v, i) => (
-                          <span key={i} style={s.visaTag}>{v.replace(/_/g, ' ')}</span>
+            {/* Fees */}
+            {tab === 'fees' && data.fees && (
+              <div>
+                {Object.entries(data.fees.fees || data.fees || {}).map(([category, items]) => {
+                  if (!items || typeof items !== 'object') return null;
+                  const entries = Array.isArray(items) ? items : Object.entries(items).map(([k, v]) => ({ name: k.replace(/_/g, ' '), amount: v }));
+                  return (
+                    <div key={category} style={s.feeSection}>
+                      <h3 style={s.feeCat}>{category.replace(/_/g, ' ')}</h3>
+                      <div style={s.feeList}>
+                        {entries.map((fee, i) => (
+                          <div key={i} style={s.feeRow}>
+                            <span style={s.feeName}>{fee.name || fee.type}</span>
+                            <span style={s.feeAmount}>{fee.amount || fee.fee}</span>
+                          </div>
                         ))}
                       </div>
                     </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Visa Exempt Countries List */}
-        {data.exempt && (
-          <div style={s.section}>
-            <h3 style={s.sectionTitle}>Visa-Exempt Countries</h3>
-            <div style={s.exemptSection}>
-              <h4 style={s.exemptTitle}>90-Day Exemption ({data.exempt.exempt90Days?.length || 0} countries)</h4>
-              <div style={s.countryTags}>
-                {data.exempt.exempt90Days?.map((c, i) => (
-                  <span key={i} style={s.countryTag}>{c}</span>
-                ))}
+                  );
+                })}
               </div>
-            </div>
-            <div style={s.exemptSection}>
-              <h4 style={s.exemptTitle}>30-Day Exemption ({data.exempt.exempt30Days?.length || 0} countries)</h4>
-              <div style={s.countryTags}>
-                {data.exempt.exempt30Days?.map((c, i) => (
-                  <span key={i} style={s.countryTag}>{c}</span>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  }
+            )}
 
-  // === DOCUMENTS GUIDE TAB ===
-  function renderDocumentsGuide() {
-    const docGuide = [
-      {
-        type: 'Passport',
-        description: 'Your primary identity and travel document',
-        requirements: ['Must be valid for at least 30 days beyond your intended stay', 'Must have at least 2 blank pages for stamps', 'Must be machine-readable (old handwritten passports may not be accepted)', 'Certified copy required for submission'],
-        tips: ['Apply for renewal at least 6 months before expiry', 'Keep a certified copy separate from your passport', 'Some visa types require validity for the full duration of the visa'],
-        where: 'Your country\'s passport office or embassy',
-        validity: 'Varies by country (typically 5-10 years)',
-      },
-      {
-        type: 'Police Clearance Certificate',
-        description: 'Criminal record check from law enforcement authorities',
-        requirements: ['Must not be older than 6 months at time of application', 'Required from country of origin', 'Required from ANY country where you lived for 12+ months since age 18', 'Original certificate required (not certified copy)'],
-        tips: ['Start early - some countries take 4-8 weeks to issue', 'FBI clearance accepted for US citizens', 'SA police clearance (SAPS) costs ZAR 91 and takes 2-4 weeks', 'Some countries offer expedited processing for a fee'],
-        where: 'National police authority in your country or country of residence',
-        validity: '6 months from date of issue',
-      },
-      {
-        type: 'Medical Report',
-        description: 'Health examination confirming you are not a public health risk',
-        requirements: ['Must be completed by a registered medical practitioner', 'Must not be older than 6 months at time of application', 'Must be on the prescribed DHA form (BI-811)', 'Must confirm TB screening, general health assessment'],
-        tips: ['Use the official DHA medical report form', 'Get this done AFTER all other documents are ready (to avoid expiry)', 'Keep a copy for your records'],
-        where: 'Any registered medical practitioner (GP) in your country',
-        validity: '6 months from date of examination',
-      },
-      {
-        type: 'Radiological Report (Chest X-Ray)',
-        description: 'Chest X-ray to screen for tuberculosis',
-        requirements: ['Must not be older than 6 months at time of application', 'Must be on prescribed DHA form', 'Must be performed by a registered radiologist', 'Required for most temporary residence and all permanent residence applications'],
-        tips: ['Can often be done at the same facility as your medical exam', 'Pregnant women may request exemption with medical motivation', 'Results should be interpreted by a radiologist, not just an X-ray technician'],
-        where: 'Radiology department of a hospital or medical imaging centre',
-        validity: '6 months from date of examination',
-      },
-      {
-        type: 'SAQA Evaluation',
-        description: 'Evaluation of your foreign qualification against the South African NQF',
-        requirements: ['Required for all work visas, critical skills visas, and permanent residence', 'Submit original qualification or certified copy to SAQA', 'Qualification must be from a recognized institution', 'Process takes 4-8 weeks', 'Fee: approximately ZAR 1,080'],
-        tips: ['Apply online at www.saqa.org.za', 'Include English translations of qualifications', 'SAQA does NOT determine professional registration - that\'s separate', 'Some qualifications may not have direct NQF equivalents'],
-        where: 'South African Qualifications Authority (SAQA) - online application',
-        validity: 'Does not expire once issued',
-      },
-      {
-        type: 'Proof of Financial Means',
-        description: 'Evidence that you can financially sustain yourself during your stay',
-        requirements: ['Bank statements typically for the last 3-6 months', 'Must show sufficient balance for intended stay duration', 'Statements must be from a recognized financial institution', 'For work visas: employment contract showing salary is sufficient'],
-        tips: ['Ensure your name and account details are clearly visible', 'Get the bank to stamp/certify the statements', 'For visitor visas: show funds covering accommodation + daily expenses + return travel', 'Scholarship letters or sponsor undertakings are alternative proof for students'],
-        where: 'Your bank or financial institution',
-        validity: 'Statements should be recent (within 3 months)',
-      },
-      {
-        type: 'Passport-Size Photographs',
-        description: 'Recent photographs for your application',
-        requirements: ['Two recent passport-size photographs (some categories require four)', 'White background', 'Face clearly visible, no glasses, no head coverings (unless religious)', 'Must match your current appearance'],
-        tips: ['Get extra copies made - you may need them later', 'Follow the exact specifications from VFS/DHA', 'Digital copies may also be required for online portions'],
-        where: 'Any photo studio or pharmacy with photo services',
-        validity: 'Must reflect current appearance (taken within 6 months)',
-      },
-      {
-        type: 'Marriage Certificate',
-        description: 'Proof of legal marriage for spousal visa applications',
-        requirements: ['Unabridged marriage certificate if married in South Africa', 'Foreign marriage certificate with apostille or embassy legalization', 'Must be recognized under South African law', 'English translation required if in another language'],
-        tips: ['SA marriages: order unabridged certificate from DHA (not the short-form card)', 'Foreign marriages: check if your marriage type is recognized in SA', 'Same-sex marriages legally recognized in South Africa since 2006', 'Polygamous marriages may have additional requirements'],
-        where: 'DHA (SA marriages) or relevant civil authority in country of marriage',
-        validity: 'Does not expire, but marriage must be current/valid',
-      },
-    ];
-
-    return (
-      <div>
-        <div style={s.infoBox}>
-          <strong>Document Preparation Guide</strong>
-          <p style={{ margin: '0.5rem 0 0' }}>
-            This guide covers every document type commonly required for South African visa applications.
-            Each entry explains what the document is, where to get it, validity periods, and practical tips.
-          </p>
-        </div>
-
-        {docGuide.map((doc, i) => (
-          <div key={i} style={s.docGuideCard}>
-            <h3 style={s.docGuideTitle}>{doc.type}</h3>
-            <p style={s.docGuideDesc}>{doc.description}</p>
-
-            <div style={s.docGuideRow}>
-              <div style={s.docGuideCol}>
-                <h4 style={s.docGuideSub}>Requirements</h4>
-                <ul style={s.list}>
-                  {doc.requirements.map((r, j) => (
-                    <li key={j} style={s.listItem}>{r}</li>
-                  ))}
-                </ul>
-              </div>
-              <div style={s.docGuideCol}>
-                <h4 style={s.docGuideSub}>Tips</h4>
-                <ul style={s.list}>
-                  {doc.tips.map((t, j) => (
-                    <li key={j} style={{ ...s.listItem, color: '#1a5632' }}>{t}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-
-            <div style={s.docGuideMeta}>
-              <span><strong>Where to get it:</strong> {doc.where}</span>
-              <span><strong>Validity:</strong> {doc.validity}</span>
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  }
-
-  // === FEES TAB ===
-  function renderFees() {
-    const feeData = data.fees || {};
-    return (
-      <div>
-        <div style={s.infoBox}>
-          <strong>Complete Fee Schedule</strong>
-          <p style={{ margin: '0.5rem 0 0' }}>
-            All fees in South African Rand (ZAR). Fees are subject to change. Always confirm current fees with DHA or VFS Global before submitting your application.
-          </p>
-        </div>
-
-        <div style={s.feeTable}>
-          <div style={s.feeTableHeader}>
-            <span style={{ flex: 2 }}>Fee Type</span>
-            <span style={{ flex: 1, textAlign: 'right' }}>Amount (ZAR)</span>
-            <span style={{ flex: 3 }}>Notes</span>
-          </div>
-          {Object.entries(feeData.dhaFees || {}).map(([key, fee]) => (
-            <div key={key} style={s.feeTableRow}>
-              <span style={{ flex: 2, fontWeight: 600, textTransform: 'capitalize' }}>{key.replace(/_/g, ' ')}</span>
-              <span style={{ flex: 1, textAlign: 'right', fontWeight: 700, color: '#1a5632' }}>
-                {fee.amount === 0 ? 'FREE' : `R ${fee.amount.toLocaleString()}`}
-              </span>
-              <span style={{ flex: 3, fontSize: '0.8125rem', color: '#6c757d' }}>{fee.notes}</span>
-            </div>
-          ))}
-        </div>
-
-        {feeData.notes && (
-          <div style={{ ...s.infoBox, marginTop: '1rem' }}>
-            <strong>Important Notes:</strong>
-            <ul style={s.list}>
-              {feeData.notes.map((n, i) => (
-                <li key={i} style={s.listItem}>{n}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  // === PROCESSING TIMES TAB ===
-  function renderProcessingTimes() {
-    const times = data.times?.processingTimes || [];
-    const groupColors = {
-      temporary_residence: '#17a2b8',
-      work_permit: '#1a5632',
-      family: '#d4a843',
-      permanent_residence: '#002395',
-      refugee: '#6c757d',
-    };
-
-    return (
-      <div>
-        <div style={s.infoBox}>
-          <strong>Expected Processing Times</strong>
-          <p style={{ margin: '0.5rem 0 0' }}>
-            Processing times are estimates based on typical DHA and VFS processing. Actual times may vary based on
-            application completeness, current processing volumes, and other factors. These are working days/weeks unless stated otherwise.
-          </p>
-        </div>
-
-        <div style={s.timeTable}>
-          <div style={s.timeTableHeader}>
-            <span style={{ flex: 2 }}>Visa Category</span>
-            <span style={{ flex: 1 }}>Standard Processing</span>
-            <span style={{ flex: 1 }}>Expedited</span>
-            <span style={{ flex: 2 }}>Notes</span>
-          </div>
-          {times.map((t, i) => (
-            <div key={i} style={{
-              ...s.timeTableRow,
-              borderLeft: `3px solid ${groupColors[t.visaCategoryGroup] || '#6c757d'}`,
-            }}>
-              <span style={{ flex: 2, fontWeight: 600 }}>{t.visaCategoryName}</span>
-              <span style={{ flex: 1, color: '#1a5632', fontWeight: 600 }}>{t.standard}</span>
-              <span style={{ flex: 1, color: t.expedited === 'Not available' ? '#6c757d' : '#d4a843' }}>
-                {t.expedited}
-              </span>
-              <span style={{ flex: 2, fontSize: '0.8125rem', color: '#6c757d' }}>{t.notes}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  // === OFFICES TAB ===
-  function renderOffices() {
-    const offices = data.offices?.offices || [];
-    const typeColors = {
-      vfs_centre: '#1a5632',
-      dha_office: '#002395',
-      refugee_office: '#d4a843',
-    };
-    const typeLabels = {
-      vfs_centre: 'VFS Global Centre',
-      dha_office: 'DHA Office',
-      refugee_office: 'Refugee Reception Office',
-    };
-
-    return (
-      <div>
-        <div style={s.infoBox}>
-          <strong>Where to Submit Your Application</strong>
-          <p style={{ margin: '0.5rem 0 0' }}>
-            Visa applications within South Africa are submitted at VFS Global centres. Applications from outside SA
-            are submitted at the SA Embassy/Consulate or VFS centre in your country. Asylum/refugee applications
-            are made at Refugee Reception Offices.
-          </p>
-        </div>
-
-        {['vfs_centre', 'dha_office', 'refugee_office'].map((type) => {
-          const typeOffices = offices.filter((o) => o.type === type);
-          if (typeOffices.length === 0) return null;
-
-          return (
-            <div key={type} style={s.section}>
-              <h3 style={{ ...s.sectionTitle, color: typeColors[type] }}>
-                {typeLabels[type]} ({typeOffices.length})
-              </h3>
-              <div style={s.officeGrid}>
-                {typeOffices.map((office, i) => (
-                  <div key={i} style={{ ...s.officeCard, borderTop: `3px solid ${typeColors[type]}` }}>
-                    <h4 style={s.officeName}>{office.name}</h4>
-                    <div style={s.officeDetail}><strong>Address:</strong> {office.address}</div>
-                    <div style={s.officeDetail}><strong>Province:</strong> {office.province}</div>
-                    <div style={s.officeDetail}><strong>Hours:</strong> {office.operatingHours}</div>
-                    <div style={s.officeDetail}>
-                      <strong>Services:</strong>
-                      <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
-                        {office.services.map((sv, j) => (
-                          <span key={j} style={s.serviceTag}>{sv}</span>
-                        ))}
-                      </div>
+            {/* Processing Times */}
+            {tab === 'times' && data.times && (
+              <div style={s.timesList}>
+                {(data.times.processingTimes || Object.entries(data.times).map(([k, v]) => ({ category: k, ...v }))).map((item, i) => (
+                  <div key={i} style={s.timeRow}>
+                    <span style={s.timeCat}>{(item.category || item.name || '').replace(/_/g, ' ')}</span>
+                    <div style={s.timeValues}>
+                      <span style={s.timeStd}>{item.standard || item.standardDays || '—'}</span>
+                      {item.expedited && <span style={s.timeExp}>{item.expedited}</span>}
                     </div>
-                    {office.notes && <div style={s.officeNote}>{office.notes}</div>}
                   </div>
                 ))}
               </div>
-            </div>
-          );
-        })}
-      </div>
-    );
-  }
+            )}
 
-  // === PROFESSIONAL BODIES TAB ===
-  function renderProfBodies() {
-    const bodies = data.bodies?.bodies || [];
-    return (
-      <div>
-        <div style={s.infoBox}>
-          <strong>Professional Registration Bodies</strong>
-          <p style={{ margin: '0.5rem 0 0' }}>
-            Many visa categories (especially work visas and critical skills) require registration with a South African
-            professional body. This confirms your foreign qualifications and professional standing are recognized in SA.
-            Registration should be done BEFORE or during your visa application.
-          </p>
-        </div>
-
-        <div style={s.bodyGrid}>
-          {bodies.map((body, i) => (
-            <div key={i} style={s.bodyCard}>
-              <div style={s.bodyCode}>{body.code}</div>
-              <h4 style={s.bodyName}>{body.name}</h4>
-              <div style={s.bodyDetail}><strong>Registration Time:</strong> {body.registrationTime}</div>
-              <div style={s.bodyDetail}>
-                <strong>Fields:</strong>
-                <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
-                  {body.fields.map((f, j) => (
-                    <span key={j} style={s.fieldTag}>{f}</span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  // === FAQ TAB ===
-  function renderFAQ() {
-    const faqData = data.faq || { categories: [] };
-    const filtered = search
-      ? {
-          ...faqData,
-          categories: faqData.categories
-            .map((cat) => ({
-              ...cat,
-              questions: cat.questions.filter(
-                (q) =>
-                  q.q.toLowerCase().includes(search.toLowerCase()) ||
-                  q.a.toLowerCase().includes(search.toLowerCase())
-              ),
-            }))
-            .filter((cat) => cat.questions.length > 0),
-        }
-      : faqData;
-
-    return (
-      <div>
-        <input
-          type="text"
-          placeholder="Search frequently asked questions..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={s.searchInput}
-        />
-
-        {filtered.categories?.map((cat, ci) => (
-          <div key={ci} style={s.section}>
-            <h3 style={s.sectionTitle}>{cat.category}</h3>
-            {cat.questions.map((faq, qi) => {
-              const faqId = `${ci}-${qi}`;
-              return (
-                <div key={qi} style={s.faqItem}>
-                  <button
-                    style={s.faqQuestion}
-                    onClick={() => setExpandedFAQ(expandedFAQ === faqId ? null : faqId)}
-                  >
-                    <span>{faq.q}</span>
-                    <span style={s.expandIcon}>{expandedFAQ === faqId ? '\u25B2' : '\u25BC'}</span>
-                  </button>
-                  {expandedFAQ === faqId && (
-                    <div style={s.faqAnswer}>
-                      <p style={{ margin: 0, lineHeight: 1.7 }}>{faq.a}</p>
-                      {faq.legalRef && (
-                        <div style={s.faqLegalRef}>
-                          Legal Reference: {faq.legalRef}
-                        </div>
-                      )}
+            {/* Offices */}
+            {tab === 'offices' && data.offices && (
+              <div>
+                {Object.entries(data.offices.offices || data.offices || {}).map(([type, offices]) => {
+                  if (!Array.isArray(offices)) return null;
+                  return (
+                    <div key={type} style={s.officeSection}>
+                      <h3 style={s.officeSectionTitle}>{type.replace(/_/g, ' ')}</h3>
+                      <div style={s.officeGrid}>
+                        {offices.map((o, i) => (
+                          <div key={i} style={s.officeCard}>
+                            <h4 style={s.officeName}>{o.name || o.city}</h4>
+                            <p style={s.officeAddr}>{o.address}</p>
+                            {o.hours && <p style={s.officeHours}>{o.hours}</p>}
+                            {o.phone && <p style={s.officePhone}>{o.phone}</p>}
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  )}
-                </div>
-              );
-            })}
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Professional Bodies */}
+            {tab === 'bodies' && data.bodies && (
+              <div style={s.bodiesGrid}>
+                {(data.bodies.bodies || data.bodies || []).map((body, i) => (
+                  <div key={i} style={s.bodyCard}>
+                    <h3 style={s.bodyName}>{body.name}</h3>
+                    <p style={s.bodyAbbr}>{body.abbreviation}</p>
+                    <p style={s.bodyField}>{body.field || body.fields?.join(', ')}</p>
+                    {body.registrationTime && <span style={s.bodyTime}>{body.registrationTime}</span>}
+                    {body.website && <a href={body.website} target="_blank" rel="noopener noreferrer" style={s.bodyLink}>Visit Website &rarr;</a>}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* FAQ */}
+            {tab === 'faq' && data.faq && (
+              <div>
+                <input type="text" placeholder="Search frequently asked questions..." value={search} onChange={e => setSearch(e.target.value)} style={s.searchInput} />
+                {(data.faq.categories || []).map(cat => {
+                  const filtered = (cat.questions || []).filter(q => !search || q.question.toLowerCase().includes(search.toLowerCase()) || q.answer.toLowerCase().includes(search.toLowerCase()));
+                  if (!filtered.length) return null;
+                  return (
+                    <div key={cat.category} style={s.faqSection}>
+                      <h3 style={s.faqCat}>{cat.category}</h3>
+                      {filtered.map((q, i) => {
+                        const key = `${cat.category}-${i}`;
+                        const open = expandedFaq === key;
+                        return (
+                          <div key={i} style={s.faqItem} onClick={() => setExpandedFaq(open ? null : key)}>
+                            <div style={s.faqQuestion}>
+                              <span style={s.faqQ}>{q.question}</span>
+                              <span style={s.faqToggle}>{open ? '\u2212' : '+'}</span>
+                            </div>
+                            {open && (
+                              <div style={s.faqAnswer}>
+                                <p style={s.faqA}>{q.answer}</p>
+                                {q.legalReference && <span style={s.faqRef}>{q.legalReference}</span>}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
-        ))}
+        )}
       </div>
-    );
-  }
+    </div>
+  );
 }
 
-// === STYLES ===
 const s = {
-  page: { padding: '2rem 0', minHeight: 'calc(100vh - 64px)' },
-  container: { maxWidth: 1200, margin: '0 auto', padding: '0 1.5rem' },
-  loading: { textAlign: 'center', padding: '4rem', color: '#6c757d' },
-  header: { textAlign: 'center', marginBottom: '2rem' },
-  title: { fontSize: '1.75rem', fontWeight: 800, color: '#1a5632' },
-  subtitle: { color: '#6c757d', fontSize: '0.9375rem', marginTop: '0.5rem', maxWidth: 700, margin: '0.5rem auto 0' },
+  page: { paddingTop: 88, paddingBottom: 48, minHeight: '100vh' },
+  title: { fontSize: 32, fontWeight: 800, color: '#fafafa', letterSpacing: '-0.02em', marginBottom: 8 },
+  subtitle: { fontSize: 15, color: '#a1a1aa', lineHeight: 1.6, marginBottom: 28, maxWidth: 600 },
+  tabs: { display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 32, padding: '4px', background: '#111113', borderRadius: 12 },
+  tabBtn: { padding: '8px 14px', background: 'transparent', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, color: '#a1a1aa', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s', whiteSpace: 'nowrap' },
+  tabActive: { background: '#1a1a1d', color: '#d4a843' },
+  searchInput: { width: '100%', padding: '14px 18px', background: '#1a1a1d', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, fontSize: 15, color: '#fafafa', fontFamily: 'inherit', outline: 'none', marginBottom: 20 },
+  muted: { color: '#52525b', fontSize: 14, textAlign: 'center', padding: 40 },
 
-  // Tab bar
-  tabBar: {
-    display: 'flex', gap: '0.25rem', flexWrap: 'wrap', marginBottom: '2rem',
-    background: '#f8f9fa', padding: '0.5rem', borderRadius: 12,
-  },
-  tab: {
-    padding: '0.5rem 0.875rem', border: 'none', borderRadius: 8,
-    background: 'transparent', fontSize: '0.8125rem', fontWeight: 500,
-    color: '#495057', cursor: 'pointer', transition: 'all 0.2s', fontFamily: 'inherit',
-  },
-  tabActive: { background: '#1a5632', color: '#fff', fontWeight: 600 },
+  // Overview
+  statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, marginBottom: 28 },
+  statCard: { background: '#1a1a1d', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '24px 20px', textAlign: 'center' },
+  statNum: { display: 'block', fontSize: 28, fontWeight: 800, color: '#d4a843', letterSpacing: '-0.02em' },
+  statLabel: { display: 'block', fontSize: 12, color: '#52525b', marginTop: 4, textTransform: 'uppercase', letterSpacing: '0.05em' },
+  quickLinks: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 10 },
+  quickBtn: { background: '#1a1a1d', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '16px 18px', fontSize: 14, fontWeight: 600, color: '#fafafa', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left', display: 'flex', justifyContent: 'space-between', alignItems: 'center', transition: 'all 0.2s' },
+  quickArrow: { color: '#d4a843', fontSize: 16 },
 
-  content: {},
+  // Visas
+  visaGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 },
+  visaCard: { background: '#1a1a1d', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '20px 18px', textDecoration: 'none', display: 'flex', flexDirection: 'column', gap: 8, transition: 'all 0.2s' },
+  visaName: { fontSize: 15, fontWeight: 700, color: '#fafafa' },
+  visaDesc: { fontSize: 13, color: '#a1a1aa', lineHeight: 1.5, flex: 1 },
+  visaMeta: { display: 'flex', justifyContent: 'space-between', paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.04)' },
+  visaDur: { fontSize: 11, color: '#d4a843', fontWeight: 600 },
+  visaRef: { fontSize: 11, color: '#52525b', fontStyle: 'italic' },
 
-  // Stats
-  statsGrid: {
-    display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-    gap: '1rem', marginBottom: '2rem',
-  },
-  statCard: {
-    background: '#fff', borderRadius: 12, padding: '1.5rem', textAlign: 'center',
-    border: '1px solid #e9ecef',
-  },
-  statValue: { fontSize: '2rem', fontWeight: 800 },
-  statLabel: { fontSize: '0.8125rem', color: '#6c757d', marginTop: '0.25rem' },
+  // Skills
+  skillSection: { marginBottom: 28 },
+  skillCat: { fontSize: 16, fontWeight: 700, color: '#d4a843', marginBottom: 12 },
+  skillCount: { fontSize: 13, color: '#52525b', fontWeight: 400 },
+  skillList: { display: 'flex', flexDirection: 'column', gap: 6 },
+  skillRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#1a1a1d', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: '12px 16px', flexWrap: 'wrap', gap: 8 },
+  skillInfo: { display: 'flex', flexDirection: 'column' },
+  skillTitle: { fontSize: 14, fontWeight: 600, color: '#fafafa' },
+  skillOfo: { fontSize: 11, color: '#52525b' },
+  skillRight: { display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 },
+  skillQual: { fontSize: 12, color: '#a1a1aa' },
+  skillBody: { fontSize: 11, color: '#d4a843' },
 
-  // Sections
-  section: { marginBottom: '2rem' },
-  sectionTitle: { fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem', color: '#212529' },
-  sectionDesc: { fontSize: '0.875rem', color: '#6c757d', marginBottom: '1rem' },
+  // Country
+  countrySearch: { display: 'flex', gap: 12, marginBottom: 24 },
+  countryResults: { background: '#1a1a1d', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: 24 },
+  countryName: { fontSize: 22, fontWeight: 700, color: '#fafafa', marginBottom: 16 },
+  countryGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginBottom: 16 },
+  countryItem: { background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '14px 16px' },
+  countryLabel: { display: 'block', fontSize: 11, color: '#52525b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 },
+  countryValue: { fontSize: 14, fontWeight: 600, color: '#fafafa' },
+  countryNotes: { marginTop: 12, padding: 16, background: 'rgba(212,168,67,0.06)', borderRadius: 10, border: '1px solid rgba(212,168,67,0.1)' },
+  noteTitle: { fontSize: 13, fontWeight: 700, color: '#d4a843', marginBottom: 6 },
+  noteText: { fontSize: 13, color: '#a1a1aa', lineHeight: 1.6 },
 
-  // Search
-  searchInput: {
-    width: '100%', padding: '0.75rem 1rem', border: '1px solid #dee2e6',
-    borderRadius: 10, fontSize: '0.9375rem', marginBottom: '1.5rem', fontFamily: 'inherit',
-  },
-  searchRow: { display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', alignItems: 'stretch' },
-  resultCount: { fontSize: '0.8125rem', color: '#6c757d', marginBottom: '1rem' },
+  // Documents
+  docsGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 },
+  docCard: { background: '#1a1a1d', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '22px 20px' },
+  docTitle: { fontSize: 15, fontWeight: 700, color: '#fafafa', marginBottom: 8 },
+  docDesc: { fontSize: 13, color: '#a1a1aa', lineHeight: 1.6, marginBottom: 12 },
+  docTip: { fontSize: 12, color: '#d4a843', background: 'rgba(212,168,67,0.06)', padding: '8px 12px', borderRadius: 8, lineHeight: 1.5 },
+  tipLabel: { fontWeight: 700 },
 
-  // Feature grid
-  featureGrid: {
-    display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem',
-  },
-  featureCard: {
-    background: '#fff', borderRadius: 12, padding: '1.5rem', border: '1px solid #e9ecef',
-    cursor: 'pointer', transition: 'all 0.2s',
-  },
-  featureTitle: { fontSize: '1rem', fontWeight: 700, marginBottom: '0.5rem' },
-  featureDesc: { fontSize: '0.8125rem', color: '#6c757d', lineHeight: 1.6, marginBottom: '0.75rem' },
-  featureLink: { fontSize: '0.8125rem', fontWeight: 600, color: '#1a5632' },
+  // Fees
+  feeSection: { marginBottom: 24 },
+  feeCat: { fontSize: 16, fontWeight: 700, color: '#fafafa', marginBottom: 10, textTransform: 'capitalize' },
+  feeList: { display: 'flex', flexDirection: 'column', gap: 4 },
+  feeRow: { display: 'flex', justifyContent: 'space-between', padding: '10px 16px', background: '#1a1a1d', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8 },
+  feeName: { fontSize: 13, color: '#a1a1aa', textTransform: 'capitalize' },
+  feeAmount: { fontSize: 14, fontWeight: 700, color: '#d4a843' },
 
-  // Info/Legal boxes
-  infoBox: {
-    background: '#e8f5e9', borderRadius: 10, padding: '1.25rem', marginBottom: '1.5rem',
-    fontSize: '0.875rem', lineHeight: 1.6, border: '1px solid #c8e6c9',
-  },
-  legalBox: {
-    background: '#f8f9fa', borderRadius: 10, padding: '1.25rem', marginTop: '2rem',
-    fontSize: '0.8125rem', color: '#6c757d', lineHeight: 1.6, border: '1px solid #e9ecef',
-  },
+  // Times
+  timesList: { display: 'flex', flexDirection: 'column', gap: 6 },
+  timeRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 18px', background: '#1a1a1d', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10 },
+  timeCat: { fontSize: 14, fontWeight: 600, color: '#fafafa', textTransform: 'capitalize', flex: 1 },
+  timeValues: { display: 'flex', gap: 12, alignItems: 'center' },
+  timeStd: { fontSize: 13, color: '#a1a1aa' },
+  timeExp: { fontSize: 12, color: '#22c55e', fontWeight: 600 },
 
-  // Visa cards
-  visaCard: {
-    background: '#fff', borderRadius: 12, padding: '1.5rem', border: '1px solid #e9ecef',
-    marginBottom: '1.5rem',
-  },
-  visaCardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', marginBottom: '0.5rem' },
-  visaCardTitle: { fontSize: '1.125rem', fontWeight: 700 },
-  visaCardDesc: { fontSize: '0.875rem', color: '#6c757d', marginBottom: '0.5rem', lineHeight: 1.6 },
-  visaCardLegal: { fontSize: '0.75rem', color: '#adb5bd', fontStyle: 'italic', marginBottom: '1rem' },
-  visaSection: { marginTop: '1rem', paddingTop: '0.75rem', borderTop: '1px solid #f1f3f5' },
-  visaSectionTitle: { fontSize: '0.875rem', fontWeight: 700, marginBottom: '0.5rem' },
-  visaCardFooter: {
-    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-    marginTop: '1rem', paddingTop: '0.75rem', borderTop: '1px solid #e9ecef',
-  },
-  feeInfo: { fontSize: '0.8125rem', fontWeight: 600, color: '#495057' },
-  ctaLink: { fontSize: '0.8125rem', fontWeight: 600, color: '#1a5632', textDecoration: 'none' },
-  badge: {
-    display: 'inline-block', padding: '0.25rem 0.625rem', borderRadius: 999,
-    fontSize: '0.6875rem', fontWeight: 600,
-  },
+  // Offices
+  officeSection: { marginBottom: 28 },
+  officeSectionTitle: { fontSize: 16, fontWeight: 700, color: '#fafafa', marginBottom: 12, textTransform: 'capitalize' },
+  officeGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 12 },
+  officeCard: { background: '#1a1a1d', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '20px 18px' },
+  officeName: { fontSize: 14, fontWeight: 700, color: '#fafafa', marginBottom: 6 },
+  officeAddr: { fontSize: 13, color: '#a1a1aa', lineHeight: 1.5 },
+  officeHours: { fontSize: 12, color: '#52525b', marginTop: 6 },
+  officePhone: { fontSize: 12, color: '#d4a843', marginTop: 4 },
 
-  // Lists
-  list: { listStyle: 'none', padding: 0, margin: 0 },
-  listItem: { padding: '0.25rem 0', fontSize: '0.8125rem', lineHeight: 1.6, display: 'flex', gap: '0.5rem', alignItems: 'flex-start' },
-  checkIcon: { color: '#28a745', fontWeight: 700, flexShrink: 0 },
-  xIcon: { color: '#dc3545', fontWeight: 700, flexShrink: 0 },
-  warnIcon: { color: '#ffc107', flexShrink: 0 },
-
-  // Document items
-  docGrid: { display: 'flex', flexDirection: 'column', gap: '0.5rem' },
-  docItem: { padding: '0.5rem 0.75rem', background: '#f8f9fa', borderRadius: 6 },
-  docName: { fontWeight: 600, fontSize: '0.8125rem', display: 'flex', alignItems: 'center', gap: '0.5rem' },
-  docDesc: { fontSize: '0.75rem', color: '#6c757d', marginTop: '0.125rem' },
-  requiredBadge: {
-    fontSize: '0.5625rem', fontWeight: 700, color: '#155724', background: '#d4edda',
-    padding: '0.125rem 0.375rem', borderRadius: 999, textTransform: 'uppercase',
-  },
-  optionalBadge: {
-    fontSize: '0.5625rem', fontWeight: 700, color: '#856404', background: '#fff3cd',
-    padding: '0.125rem 0.375rem', borderRadius: 999, textTransform: 'uppercase',
-  },
-
-  // Skills table
-  skillCatHeader: {
-    display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%',
-    background: '#f8f9fa', border: '1px solid #e9ecef', borderRadius: 8, padding: '1rem',
-    cursor: 'pointer', fontFamily: 'inherit',
-  },
-  skillCatTitle: { fontSize: '1rem', fontWeight: 700, margin: 0 },
-  expandIcon: { fontSize: '0.75rem', color: '#6c757d' },
-  skillTable: { marginTop: '0.5rem' },
-  skillTableHeader: {
-    display: 'flex', gap: '1rem', padding: '0.75rem 1rem', background: '#1a5632',
-    color: '#fff', borderRadius: '8px 8px 0 0', fontSize: '0.75rem', fontWeight: 600,
-  },
-  skillTableRow: {
-    display: 'flex', gap: '1rem', padding: '0.75rem 1rem', borderBottom: '1px solid #f1f3f5',
-    fontSize: '0.8125rem', alignItems: 'center',
-  },
-
-  // Country check
-  countryResults: { marginTop: '1.5rem' },
-  countryName: { fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem' },
-  countryGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' },
-  countryCard: { background: '#fff', borderRadius: 10, padding: '1.25rem', border: '1px solid #e9ecef' },
-  countryCardTitle: { fontSize: '0.875rem', fontWeight: 700, marginBottom: '0.5rem' },
-  countryCardText: { fontSize: '0.8125rem', color: '#495057', lineHeight: 1.6 },
-  statusBadge: {
-    display: 'inline-block', padding: '0.25rem 0.75rem', borderRadius: 999,
-    fontSize: '0.6875rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem',
-  },
-  visaTag: {
-    padding: '0.125rem 0.5rem', background: '#e8f5e9', color: '#1a5632',
-    borderRadius: 999, fontSize: '0.6875rem', fontWeight: 500, textTransform: 'capitalize',
-  },
-  exemptSection: { marginBottom: '1.5rem' },
-  exemptTitle: { fontSize: '0.9375rem', fontWeight: 600, marginBottom: '0.5rem' },
-  countryTags: { display: 'flex', gap: '0.375rem', flexWrap: 'wrap' },
-  countryTag: {
-    padding: '0.25rem 0.625rem', background: '#f1f3f5', borderRadius: 999,
-    fontSize: '0.75rem', color: '#495057',
-  },
-
-  // Fees table
-  feeTable: { background: '#fff', borderRadius: 12, border: '1px solid #e9ecef', overflow: 'hidden' },
-  feeTableHeader: {
-    display: 'flex', gap: '1rem', padding: '0.75rem 1rem', background: '#1a5632',
-    color: '#fff', fontSize: '0.8125rem', fontWeight: 600,
-  },
-  feeTableRow: {
-    display: 'flex', gap: '1rem', padding: '0.75rem 1rem', borderBottom: '1px solid #f1f3f5',
-    fontSize: '0.875rem', alignItems: 'center',
-  },
-
-  // Time table
-  timeTable: { background: '#fff', borderRadius: 12, border: '1px solid #e9ecef', overflow: 'hidden' },
-  timeTableHeader: {
-    display: 'flex', gap: '1rem', padding: '0.75rem 1rem', background: '#1a5632',
-    color: '#fff', fontSize: '0.8125rem', fontWeight: 600,
-  },
-  timeTableRow: {
-    display: 'flex', gap: '1rem', padding: '0.75rem 1rem', borderBottom: '1px solid #f1f3f5',
-    fontSize: '0.875rem', alignItems: 'center',
-  },
-
-  // Office grid
-  officeGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' },
-  officeCard: { background: '#fff', borderRadius: 10, padding: '1.25rem', border: '1px solid #e9ecef' },
-  officeName: { fontSize: '1rem', fontWeight: 700, marginBottom: '0.5rem' },
-  officeDetail: { fontSize: '0.8125rem', color: '#495057', marginBottom: '0.375rem' },
-  officeNote: { fontSize: '0.75rem', color: '#6c757d', fontStyle: 'italic', marginTop: '0.5rem' },
-  serviceTag: {
-    padding: '0.125rem 0.5rem', background: '#e8f5e9', color: '#1a5632',
-    borderRadius: 999, fontSize: '0.625rem', fontWeight: 500,
-  },
-
-  // Professional bodies
-  bodyGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' },
-  bodyCard: { background: '#fff', borderRadius: 10, padding: '1.25rem', border: '1px solid #e9ecef' },
-  bodyCode: {
-    display: 'inline-block', padding: '0.125rem 0.5rem', background: '#1a5632', color: '#fff',
-    borderRadius: 4, fontSize: '0.6875rem', fontWeight: 700, marginBottom: '0.5rem',
-  },
-  bodyName: { fontSize: '0.9375rem', fontWeight: 700, marginBottom: '0.5rem' },
-  bodyDetail: { fontSize: '0.8125rem', color: '#495057', marginBottom: '0.375rem' },
-  fieldTag: {
-    padding: '0.125rem 0.5rem', background: '#f1f3f5', color: '#495057',
-    borderRadius: 999, fontSize: '0.625rem',
-  },
+  // Bodies
+  bodiesGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 },
+  bodyCard: { background: '#1a1a1d', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '22px 20px' },
+  bodyName: { fontSize: 14, fontWeight: 700, color: '#fafafa', marginBottom: 2 },
+  bodyAbbr: { fontSize: 13, fontWeight: 600, color: '#d4a843', marginBottom: 6 },
+  bodyField: { fontSize: 13, color: '#a1a1aa', marginBottom: 8 },
+  bodyTime: { display: 'block', fontSize: 12, color: '#52525b', marginBottom: 6 },
+  bodyLink: { fontSize: 13, fontWeight: 600, color: '#d4a843', textDecoration: 'none' },
 
   // FAQ
-  faqItem: { marginBottom: '0.5rem' },
-  faqQuestion: {
-    display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%',
-    padding: '1rem', background: '#fff', border: '1px solid #e9ecef', borderRadius: 8,
-    fontSize: '0.9375rem', fontWeight: 600, color: '#212529', cursor: 'pointer',
-    textAlign: 'left', fontFamily: 'inherit',
-  },
-  faqAnswer: {
-    padding: '1rem', background: '#f8f9fa', borderRadius: '0 0 8px 8px',
-    border: '1px solid #e9ecef', borderTop: 'none', fontSize: '0.875rem', color: '#495057',
-  },
-  faqLegalRef: {
-    marginTop: '0.75rem', fontSize: '0.75rem', color: '#adb5bd', fontStyle: 'italic',
-  },
-
-  // Document guide
-  docGuideCard: {
-    background: '#fff', borderRadius: 12, padding: '1.5rem', border: '1px solid #e9ecef',
-    marginBottom: '1rem',
-  },
-  docGuideTitle: { fontSize: '1.125rem', fontWeight: 700, marginBottom: '0.25rem' },
-  docGuideDesc: { fontSize: '0.875rem', color: '#6c757d', marginBottom: '1rem' },
-  docGuideRow: { display: 'flex', gap: '2rem', flexWrap: 'wrap' },
-  docGuideCol: { flex: 1, minWidth: 250 },
-  docGuideSub: { fontSize: '0.8125rem', fontWeight: 700, marginBottom: '0.5rem' },
-  docGuideMeta: {
-    display: 'flex', gap: '2rem', marginTop: '1rem', paddingTop: '0.75rem',
-    borderTop: '1px solid #f1f3f5', fontSize: '0.8125rem', color: '#495057', flexWrap: 'wrap',
-  },
+  faqSection: { marginBottom: 28 },
+  faqCat: { fontSize: 16, fontWeight: 700, color: '#d4a843', marginBottom: 12 },
+  faqItem: { background: '#1a1a1d', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, marginBottom: 6, cursor: 'pointer', overflow: 'hidden', transition: 'all 0.2s' },
+  faqQuestion: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 18px' },
+  faqQ: { fontSize: 14, fontWeight: 600, color: '#fafafa' },
+  faqToggle: { fontSize: 18, color: '#d4a843', fontWeight: 300 },
+  faqAnswer: { padding: '0 18px 16px', borderTop: '1px solid rgba(255,255,255,0.04)' },
+  faqA: { fontSize: 13, color: '#a1a1aa', lineHeight: 1.7, paddingTop: 12 },
+  faqRef: { display: 'block', fontSize: 11, color: '#52525b', fontStyle: 'italic', marginTop: 8 },
 };

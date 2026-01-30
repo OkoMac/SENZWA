@@ -1,248 +1,122 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { eligibilityAPI } from '../services/api';
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { eligibilityAPI, applicantAPI } from '../services/api';
 
 export default function EligibilityCheck() {
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null);
-  const [form, setForm] = useState({
-    nationality: '',
-    purposeOfStay: '',
-    intendedDuration: '',
-    passportNumber: 'PROVIDED',
-    passportExpiry: '',
-    maritalStatus: '',
-    hasJobOffer: false,
-    hasSAQAEvaluation: false,
-    isOnCriticalSkillsList: false,
-    hasProfessionalRegistration: false,
-    hasDOLRecommendation: false,
-    hasPoliceClearance: false,
-    hasMedicalReport: false,
-    hasAcceptanceLetter: false,
-    hasCriminalRecord: false,
-    hasImmigrationViolations: false,
-    spouseIsSACitizen: false,
-    hasLifePartnerInSA: false,
-    yearsOnWorkVisa: 0,
-    isMultinationalEmployee: false,
-    familyTiesInSA: null,
-    qualifications: [],
-    financialStanding: { monthlyIncome: 0, annualIncome: 0, netWorth: 0, investmentCapital: 0 },
-  });
+  const [profile, setProfile] = useState(null);
+  const [results, setResults] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [evaluating, setEvaluating] = useState(false);
 
-  const handleChange = (field, value) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleFinancial = (field, value) => {
-    setForm((prev) => ({
-      ...prev,
-      financialStanding: { ...prev.financialStanding, [field]: parseInt(value) || 0 },
-    }));
-  };
-
-  const runEvaluation = async () => {
-    if (!form.nationality || !form.purposeOfStay) {
-      alert('Please provide at least your nationality and purpose of stay.');
-      return;
-    }
-    setLoading(true);
-    try {
-      const res = await eligibilityAPI.evaluate(form);
-      setResult(res.data.evaluation);
-    } catch (err) {
-      alert(err.response?.data?.error || 'Evaluation failed');
-    } finally {
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await applicantAPI.getMe();
+        setProfile(res.data.applicant);
+      } catch {}
       setLoading(false);
     }
+    load();
+  }, []);
+
+  const handleEvaluate = async () => {
+    if (!profile) return;
+    setEvaluating(true);
+    try {
+      const res = await eligibilityAPI.evaluate(profile);
+      setResults(res.data);
+    } catch (err) {
+      alert(err.response?.data?.error || 'Evaluation failed.');
+    } finally {
+      setEvaluating(false);
+    }
   };
+
+  if (loading) return <div style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: 64 }}><div className="spinner" /></div>;
 
   return (
     <div style={s.page}>
-      <div className="container" style={{ maxWidth: 900 }}>
-        <div style={s.header}>
-          <h1 style={s.title}>AI Eligibility Assessment</h1>
-          <p style={s.subtitle}>
-            Answer the questions below and our rules engine will evaluate your eligibility
-            across all South African visa categories based on immigration law.
-          </p>
-        </div>
+      <div className="container-md">
+        <h1 style={s.title}>Eligibility Assessment</h1>
+        <p style={s.subtitle}>AI-powered evaluation of your profile against all South African visa categories based on the Immigration Act 13 of 2002.</p>
 
-        {!result ? (
-          <div style={s.formCard}>
-            {/* Basic Info */}
-            <h2 style={s.groupTitle}>Basic Information</h2>
-            <div style={s.row}>
-              <div className="input-group" style={{ flex: 1 }}>
-                <label>Nationality</label>
-                <input value={form.nationality} onChange={(e) => handleChange('nationality', e.target.value)} placeholder="e.g. Nigerian" />
-              </div>
-              <div className="input-group" style={{ flex: 1 }}>
-                <label>Purpose of Stay</label>
-                <select value={form.purposeOfStay} onChange={(e) => handleChange('purposeOfStay', e.target.value)}>
-                  <option value="">Select purpose</option>
-                  <option value="tourism">Tourism</option>
-                  <option value="business_visit">Business Visit</option>
-                  <option value="work">Employment</option>
-                  <option value="study">Study</option>
-                  <option value="business">Start Business</option>
-                  <option value="medical">Medical Treatment</option>
-                  <option value="remote_work">Remote Work</option>
-                  <option value="retirement">Retirement</option>
-                  <option value="family_reunion">Family Reunion</option>
-                </select>
-              </div>
-            </div>
-
-            <div style={s.row}>
-              <div className="input-group" style={{ flex: 1 }}>
-                <label>Passport Expiry Date</label>
-                <input type="date" value={form.passportExpiry} onChange={(e) => handleChange('passportExpiry', e.target.value)} />
-              </div>
-              <div className="input-group" style={{ flex: 1 }}>
-                <label>Marital Status</label>
-                <select value={form.maritalStatus} onChange={(e) => handleChange('maritalStatus', e.target.value)}>
-                  <option value="">Select</option>
-                  <option value="single">Single</option>
-                  <option value="married">Married</option>
-                  <option value="divorced">Divorced</option>
-                  <option value="life_partner">Life Partner</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Financial */}
-            <h2 style={s.groupTitle}>Financial Information</h2>
-            <div style={s.row}>
-              <div className="input-group" style={{ flex: 1 }}>
-                <label>Annual Income (ZAR)</label>
-                <input type="number" value={form.financialStanding.annualIncome || ''} onChange={(e) => handleFinancial('annualIncome', e.target.value)} placeholder="e.g. 600000" />
-              </div>
-              <div className="input-group" style={{ flex: 1 }}>
-                <label>Net Worth (ZAR)</label>
-                <input type="number" value={form.financialStanding.netWorth || ''} onChange={(e) => handleFinancial('netWorth', e.target.value)} placeholder="e.g. 5000000" />
-              </div>
-              <div className="input-group" style={{ flex: 1 }}>
-                <label>Investment Capital (ZAR)</label>
-                <input type="number" value={form.financialStanding.investmentCapital || ''} onChange={(e) => handleFinancial('investmentCapital', e.target.value)} placeholder="e.g. 5000000" />
-              </div>
-            </div>
-
-            {/* Qualifications */}
-            <h2 style={s.groupTitle}>Qualifications & Employment</h2>
-            <div style={s.checkboxGrid}>
+        {!profile ? (
+          <div style={s.noProfile}>
+            <h2 style={s.noProfileTitle}>Complete your profile first</h2>
+            <p style={s.noProfileText}>We need your personal details, travel purpose, qualifications, and background to evaluate eligibility.</p>
+            <Link to="/onboarding" className="btn btn-primary btn-lg">Start Onboarding</Link>
+          </div>
+        ) : !results ? (
+          <div style={s.readyCard}>
+            <div style={s.readyIcon}>AI</div>
+            <h2 style={s.readyTitle}>Profile Ready</h2>
+            <p style={s.readyText}>Your profile is complete. Our AI engine will evaluate your eligibility across all 22+ visa categories.</p>
+            <div style={s.profileSummary}>
               {[
-                ['hasJobOffer', 'I have a job offer in South Africa'],
-                ['hasSAQAEvaluation', 'My qualifications are SAQA-evaluated'],
-                ['isOnCriticalSkillsList', 'My skill is on the Critical Skills List'],
-                ['hasProfessionalRegistration', 'I have SA professional registration'],
-                ['hasDOLRecommendation', 'I have a Department of Labour recommendation'],
-                ['isMultinationalEmployee', 'I work for a multinational company with SA presence'],
-                ['hasAcceptanceLetter', 'I have an acceptance letter from a SA institution'],
-              ].map(([field, label]) => (
-                <label key={field} style={s.checkbox}>
-                  <input type="checkbox" checked={form[field]} onChange={(e) => handleChange(field, e.target.checked)} />
-                  <span>{label}</span>
-                </label>
+                { l: 'Nationality', v: profile.nationality },
+                { l: 'Purpose', v: profile.purposeOfStay },
+                { l: 'Duration', v: profile.intendedDuration?.replace(/_/g, ' ') },
+                { l: 'Qualifications', v: (profile.qualifications || []).map(q => q.name || q).join(', ') || 'None' },
+                { l: 'Job Offer', v: profile.hasJobOffer ? 'Yes' : 'No' },
+              ].map((item, i) => (
+                <div key={i} style={s.summaryRow}>
+                  <span style={s.summaryLabel}>{item.l}</span>
+                  <span style={s.summaryValue}>{item.v || '—'}</span>
+                </div>
               ))}
             </div>
-
-            <div className="input-group">
-              <label>Years on work visa in SA</label>
-              <input type="number" value={form.yearsOnWorkVisa} onChange={(e) => handleChange('yearsOnWorkVisa', parseInt(e.target.value) || 0)} min="0" max="30" />
-            </div>
-
-            {/* Documents & Background */}
-            <h2 style={s.groupTitle}>Documents & Background</h2>
-            <div style={s.checkboxGrid}>
-              {[
-                ['hasPoliceClearance', 'I have a police clearance certificate'],
-                ['hasMedicalReport', 'I have a medical report (less than 6 months old)'],
-                ['spouseIsSACitizen', 'My spouse is a SA citizen/PR'],
-                ['hasLifePartnerInSA', 'I have a life partner who is a SA citizen/PR'],
-                ['hasCriminalRecord', 'I have a criminal record'],
-                ['hasImmigrationViolations', 'I have previous immigration violations'],
-              ].map(([field, label]) => (
-                <label key={field} style={s.checkbox}>
-                  <input type="checkbox" checked={form[field]} onChange={(e) => handleChange(field, e.target.checked)} />
-                  <span>{label}</span>
-                </label>
-              ))}
-            </div>
-
-            <div style={s.ctaBox}>
-              <button className="btn btn-primary btn-lg" onClick={runEvaluation} disabled={loading}>
-                {loading ? 'Evaluating...' : 'Run Eligibility Assessment'}
-              </button>
-              <p style={s.hint}>Your profile will be evaluated against all 22+ visa categories.</p>
-            </div>
+            <button className="btn btn-primary btn-lg" onClick={handleEvaluate} disabled={evaluating} style={{ width: '100%' }}>
+              {evaluating ? 'Evaluating...' : 'Run AI Assessment'}
+            </button>
           </div>
         ) : (
           <div>
-            {/* Results */}
-            <div style={s.resultHeader}>
-              <h2 style={s.resultTitle}>Eligibility Assessment Results</h2>
-              <p style={s.resultMeta}>
-                {result.totalCategoriesEvaluated} categories evaluated |{' '}
-                {result.eligible.length} eligible |{' '}
-                {result.ineligible.length} ineligible
-              </p>
-              <button className="btn btn-outline" onClick={() => setResult(null)}>
-                Run New Assessment
-              </button>
+            {/* Recommended */}
+            {results.recommendedPathway && (
+              <div style={s.recommendCard}>
+                <span style={s.recommendLabel}>RECOMMENDED PATHWAY</span>
+                <h2 style={s.recommendTitle}>{results.recommendedPathway.name}</h2>
+                <p style={s.recommendDesc}>{results.recommendedPathway.description}</p>
+                <div style={s.scoreBar}>
+                  <div style={s.scoreBarBg}>
+                    <div style={{ ...s.scoreBarFill, width: `${results.recommendedPathway.score || 0}%` }} />
+                  </div>
+                  <span style={s.scoreValue}>{results.recommendedPathway.score || 0}%</span>
+                </div>
+              </div>
+            )}
+
+            {/* All results */}
+            <h2 style={s.resultsTitle}>All Categories Evaluated ({(results.results || []).length})</h2>
+            <div style={s.resultsList}>
+              {(results.results || []).sort((a, b) => (b.score || 0) - (a.score || 0)).map((r, i) => (
+                <div key={i} style={{ ...s.resultCard, borderLeftColor: r.eligible ? '#22c55e' : r.score >= 40 ? '#f59e0b' : 'rgba(255,255,255,0.06)' }}>
+                  <div style={s.resultTop}>
+                    <div>
+                      <h3 style={s.resultName}>{r.categoryName || r.categoryId}</h3>
+                      <span style={{ ...s.resultBadge, background: r.eligible ? 'rgba(34,197,94,0.12)' : r.score >= 40 ? 'rgba(245,158,11,0.12)' : 'rgba(255,255,255,0.04)', color: r.eligible ? '#22c55e' : r.score >= 40 ? '#f59e0b' : '#52525b' }}>
+                        {r.eligible ? 'ELIGIBLE' : r.score >= 40 ? 'PARTIAL' : 'NOT ELIGIBLE'}
+                      </span>
+                    </div>
+                    <div style={s.resultScore}>
+                      <span style={{ ...s.resultScoreNum, color: r.eligible ? '#22c55e' : r.score >= 40 ? '#f59e0b' : '#52525b' }}>{r.score || 0}%</span>
+                    </div>
+                  </div>
+                  {r.guidance && <p style={s.resultGuidance}>{r.guidance}</p>}
+                  {r.missingRequirements?.length > 0 && (
+                    <div style={s.missingList}>
+                      {r.missingRequirements.slice(0, 3).map((m, j) => (
+                        <span key={j} style={s.missingItem}>{m}</span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
 
-            {/* Recommended */}
-            {result.recommendedPathway && (
-              <div style={s.recommendedCard}>
-                <div style={s.recommendedBadge}>RECOMMENDED PATHWAY</div>
-                <h3 style={s.recommendedTitle}>{result.recommendedPathway.categoryName}</h3>
-                <div style={s.scoreBar}>
-                  <div style={{ ...s.scoreFill, width: `${result.recommendedPathway.eligibilityScore}%` }} />
-                </div>
-                <span style={s.scoreText}>
-                  Eligibility Score: {result.recommendedPathway.eligibilityScore}%
-                </span>
-                <p style={s.recommendedLegal}>{result.recommendedPathway.legalReference}</p>
-                <pre style={s.guidance}>{result.recommendedPathway.guidance}</pre>
-                <button
-                  className="btn btn-primary"
-                  onClick={() => navigate(`/visas/${result.recommendedPathway.categoryId}`)}
-                >
-                  View Full Details & Apply
-                </button>
-              </div>
-            )}
-
-            {/* Other Eligible */}
-            {result.eligible.length > 1 && (
-              <div style={s.section}>
-                <h3 style={s.sectionTitle}>Other Eligible Categories</h3>
-                <div style={s.eligibleGrid}>
-                  {result.eligible.slice(1).map((cat, i) => (
-                    <div key={i} style={s.eligibleCard} onClick={() => navigate(`/visas/${cat.categoryId}`)}>
-                      <div style={s.eligibleHeader}>
-                        <span style={s.eligibleName}>{cat.categoryName}</span>
-                        <span style={s.eligibleScore}>{cat.eligibilityScore}%</span>
-                      </div>
-                      <span style={s.eligibleLegal}>{cat.legalReference}</span>
-                      {cat.riskFlags.length > 0 && (
-                        <span style={s.riskNote}>{cat.riskFlags.length} risk flag(s)</span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Disclaimer */}
-            <div style={s.disclaimer}>
-              <strong>Legal Disclaimer:</strong> This assessment is based on the Immigration Act 13 of 2002
-              (as amended) and current DHA regulations. It provides guidance only. All final visa decisions
-              are made by the Department of Home Affairs. Consult a registered immigration practitioner
-              for personalized legal advice.
+            <div style={{ marginTop: 24, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+              <button className="btn btn-secondary" onClick={() => setResults(null)}>Re-evaluate</button>
+              <Link to="/visas" className="btn btn-primary">Browse Visa Categories</Link>
             </div>
           </div>
         )}
@@ -252,78 +126,37 @@ export default function EligibilityCheck() {
 }
 
 const s = {
-  page: { padding: '2rem 0' },
-  header: { textAlign: 'center', marginBottom: '2rem' },
-  title: { fontSize: '1.75rem', fontWeight: 800, color: '#1a5632' },
-  subtitle: { color: '#6c757d', fontSize: '0.9375rem', marginTop: '0.5rem' },
-  formCard: {
-    background: '#fff', borderRadius: 16, padding: '2.5rem',
-    border: '1px solid #e9ecef', boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
-  },
-  groupTitle: {
-    fontSize: '1rem', fontWeight: 700, color: '#1a5632',
-    marginBottom: '1rem', marginTop: '1.5rem',
-    paddingBottom: '0.5rem', borderBottom: '1px solid #e9ecef',
-  },
-  row: { display: 'flex', gap: '1rem', flexWrap: 'wrap' },
-  checkboxGrid: {
-    display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-    gap: '0.5rem', marginBottom: '1rem',
-  },
-  checkbox: {
-    display: 'flex', gap: '0.5rem', alignItems: 'center',
-    fontSize: '0.875rem', color: '#495057', cursor: 'pointer',
-    padding: '0.5rem', borderRadius: 6, background: '#f8f9fa',
-  },
-  ctaBox: { textAlign: 'center', marginTop: '2rem' },
-  hint: { fontSize: '0.8125rem', color: '#6c757d', marginTop: '0.75rem' },
-  resultHeader: {
-    textAlign: 'center', marginBottom: '2rem',
-    padding: '1.5rem', background: '#fff', borderRadius: 12,
-    border: '1px solid #e9ecef',
-  },
-  resultTitle: { fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.5rem' },
-  resultMeta: { fontSize: '0.875rem', color: '#6c757d', marginBottom: '1rem' },
-  recommendedCard: {
-    background: 'linear-gradient(135deg, #1a5632, #2d7a4a)',
-    borderRadius: 16, padding: '2rem', color: '#fff', marginBottom: '1.5rem',
-  },
-  recommendedBadge: {
-    display: 'inline-block', padding: '0.25rem 0.75rem',
-    background: 'rgba(212,168,67,0.9)', color: '#1a1a2e',
-    borderRadius: 999, fontSize: '0.6875rem', fontWeight: 700,
-    letterSpacing: '1px', marginBottom: '0.75rem',
-  },
-  recommendedTitle: { fontSize: '1.5rem', fontWeight: 700, marginBottom: '1rem' },
-  scoreBar: {
-    height: 8, background: 'rgba(255,255,255,0.2)', borderRadius: 999,
-    marginBottom: '0.5rem', overflow: 'hidden',
-  },
-  scoreFill: { height: '100%', background: '#d4a843', borderRadius: 999, transition: 'width 0.5s' },
-  scoreText: { fontSize: '0.875rem', opacity: 0.9, display: 'block', marginBottom: '0.75rem' },
-  recommendedLegal: { fontSize: '0.8125rem', opacity: 0.75, marginBottom: '1rem' },
-  guidance: {
-    background: 'rgba(255,255,255,0.1)', borderRadius: 8, padding: '1rem',
-    fontSize: '0.8125rem', lineHeight: 1.6, whiteSpace: 'pre-wrap',
-    fontFamily: 'inherit', marginBottom: '1rem',
-  },
-  section: {
-    background: '#fff', borderRadius: 12, padding: '1.5rem',
-    border: '1px solid #e9ecef', marginBottom: '1.5rem',
-  },
-  sectionTitle: { fontSize: '1.125rem', fontWeight: 700, marginBottom: '1rem' },
-  eligibleGrid: { display: 'flex', flexDirection: 'column', gap: '0.75rem' },
-  eligibleCard: {
-    padding: '1rem', background: '#f8f9fa', borderRadius: 8,
-    cursor: 'pointer', borderLeft: '3px solid #1a5632',
-  },
-  eligibleHeader: { display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' },
-  eligibleName: { fontWeight: 600, fontSize: '0.9375rem' },
-  eligibleScore: { fontWeight: 700, color: '#1a5632' },
-  eligibleLegal: { fontSize: '0.75rem', color: '#6c757d' },
-  riskNote: { fontSize: '0.75rem', color: '#ffc107', fontWeight: 600, display: 'block', marginTop: '0.25rem' },
-  disclaimer: {
-    background: '#fff3cd', borderRadius: 8, padding: '1rem',
-    fontSize: '0.8125rem', color: '#856404', lineHeight: 1.5,
-  },
+  page: { paddingTop: 88, paddingBottom: 48, minHeight: '100vh' },
+  title: { fontSize: 32, fontWeight: 800, color: '#fafafa', letterSpacing: '-0.02em', marginBottom: 8 },
+  subtitle: { fontSize: 15, color: '#a1a1aa', lineHeight: 1.6, marginBottom: 32, maxWidth: 600 },
+  noProfile: { background: '#1a1a1d', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 20, padding: '48px 32px', textAlign: 'center' },
+  noProfileTitle: { fontSize: 22, fontWeight: 700, color: '#fafafa', marginBottom: 8 },
+  noProfileText: { fontSize: 14, color: '#a1a1aa', marginBottom: 24, maxWidth: 400, margin: '0 auto 24px' },
+  readyCard: { background: '#1a1a1d', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 20, padding: '36px 32px', textAlign: 'center' },
+  readyIcon: { width: 56, height: 56, borderRadius: 16, background: 'linear-gradient(135deg, #d4a843 0%, #b8922e 100%)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#09090b', fontWeight: 800, fontSize: 18, marginBottom: 20 },
+  readyTitle: { fontSize: 22, fontWeight: 700, color: '#fafafa', marginBottom: 8 },
+  readyText: { fontSize: 14, color: '#a1a1aa', marginBottom: 24 },
+  profileSummary: { background: 'rgba(255,255,255,0.03)', borderRadius: 12, padding: '16px', marginBottom: 24, textAlign: 'left' },
+  summaryRow: { display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' },
+  summaryLabel: { fontSize: 13, color: '#52525b' },
+  summaryValue: { fontSize: 13, color: '#fafafa', fontWeight: 600, textTransform: 'capitalize' },
+  recommendCard: { background: 'linear-gradient(135deg, rgba(212,168,67,0.08) 0%, rgba(212,168,67,0.02) 100%)', border: '1px solid rgba(212,168,67,0.2)', borderRadius: 20, padding: '32px 28px', marginBottom: 28 },
+  recommendLabel: { fontSize: 10, fontWeight: 700, color: '#d4a843', letterSpacing: '0.1em', textTransform: 'uppercase' },
+  recommendTitle: { fontSize: 24, fontWeight: 800, color: '#fafafa', margin: '8px 0' },
+  recommendDesc: { fontSize: 14, color: '#a1a1aa', lineHeight: 1.6, marginBottom: 16 },
+  scoreBar: { display: 'flex', alignItems: 'center', gap: 12 },
+  scoreBarBg: { flex: 1, height: 6, background: 'rgba(255,255,255,0.06)', borderRadius: 999, overflow: 'hidden' },
+  scoreBarFill: { height: '100%', background: 'linear-gradient(90deg, #d4a843, #e0b94f)', borderRadius: 999, transition: 'width 0.6s ease' },
+  scoreValue: { fontSize: 20, fontWeight: 800, color: '#d4a843' },
+  resultsTitle: { fontSize: 18, fontWeight: 700, color: '#fafafa', marginBottom: 16 },
+  resultsList: { display: 'flex', flexDirection: 'column', gap: 10 },
+  resultCard: { background: '#1a1a1d', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '18px 20px', borderLeft: '3px solid' },
+  resultTop: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 },
+  resultName: { fontSize: 15, fontWeight: 700, color: '#fafafa', marginBottom: 4 },
+  resultBadge: { fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 999, letterSpacing: '0.05em' },
+  resultScore: {},
+  resultScoreNum: { fontSize: 22, fontWeight: 800 },
+  resultGuidance: { fontSize: 13, color: '#a1a1aa', marginTop: 8, lineHeight: 1.5 },
+  missingList: { display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 10 },
+  missingItem: { fontSize: 11, color: '#52525b', background: 'rgba(255,255,255,0.04)', padding: '3px 10px', borderRadius: 999 },
 };

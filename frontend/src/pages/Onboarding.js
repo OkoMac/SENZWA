@@ -2,385 +2,228 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { applicantAPI } from '../services/api';
 
-const COUNTRIES = [
-  'Afghanistan','Albania','Algeria','Angola','Argentina','Australia','Bangladesh','Botswana',
-  'Brazil','Cameroon','Canada','China','Colombia','Congo (DRC)','Egypt','Ethiopia','France',
-  'Germany','Ghana','India','Indonesia','Iran','Iraq','Italy','Japan','Kenya','Lesotho',
-  'Malawi','Malaysia','Mexico','Morocco','Mozambique','Namibia','Netherlands','Nigeria',
-  'Pakistan','Philippines','Poland','Portugal','Russia','Rwanda','Saudi Arabia','Senegal',
-  'Somalia','South Korea','Spain','Sri Lanka','Sudan','Eswatini','Sweden','Syria','Tanzania',
-  'Thailand','Tunisia','Turkey','Uganda','Ukraine','United Arab Emirates','United Kingdom',
-  'United States','Vietnam','Zambia','Zimbabwe',
-];
+const STEPS = ['Personal', 'Travel', 'Background', 'Review'];
 
-const PURPOSES = [
-  { value: 'tourism', label: 'Tourism / Leisure' },
-  { value: 'business_visit', label: 'Business Visit' },
-  { value: 'family_visit', label: 'Family / Personal Visit' },
-  { value: 'work', label: 'Employment / Work' },
-  { value: 'study', label: 'Study / Education' },
-  { value: 'business', label: 'Start / Invest in Business' },
-  { value: 'medical', label: 'Medical Treatment' },
-  { value: 'remote_work', label: 'Remote Work' },
-  { value: 'retirement', label: 'Retirement' },
-  { value: 'family_reunion', label: 'Family Reunification' },
-  { value: 'permanent_residence', label: 'Permanent Residence' },
-  { value: 'refugee', label: 'Refugee / Asylum' },
-];
+const NATIONALITIES = ['Afghan','Albanian','Algerian','American','Angolan','Argentine','Australian','Bangladeshi','Belgian','Brazilian','British','Burundian','Cameroonian','Canadian','Chinese','Colombian','Congolese','Cuban','Dutch','Egyptian','Ethiopian','Filipino','French','German','Ghanaian','Greek','Guatemalan','Haitian','Indian','Indonesian','Iranian','Iraqi','Irish','Israeli','Italian','Ivorian','Jamaican','Japanese','Jordanian','Kenyan','Lebanese','Lesotho','Liberian','Libyan','Malawian','Malaysian','Mexican','Moroccan','Mozambican','Namibian','Nigerian','Pakistani','Palestinian','Peruvian','Polish','Portuguese','Romanian','Russian','Rwandan','Saudi','Senegalese','Sierra Leonean','Somali','South Korean','Spanish','Sri Lankan','Sudanese','Swazi','Swedish','Swiss','Syrian','Taiwanese','Tanzanian','Thai','Togolese','Tunisian','Turkish','Ugandan','Ukrainian','Venezuelan','Vietnamese','Zambian','Zimbabwean'];
 
 export default function Onboarding() {
   const navigate = useNavigate();
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(0);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
-    passportNumber: '', nationality: '', countryOfOrigin: '', dateOfBirth: '',
-    gender: '', maritalStatus: '', purposeOfStay: '', intendedDuration: '',
-    qualifications: [], employmentHistory: [], financialStanding: {},
-    familyTiesInSA: null,
+    passportNumber: '', nationality: '', countryOfOrigin: '', dateOfBirth: '', gender: '',
+    purposeOfStay: '', intendedDuration: '', hasJobOffer: false, employerName: '',
+    qualifications: '', fieldOfStudy: '', yearsExperience: '',
+    hasCriminalRecord: false, hasOverstayed: false, hasPreviousRefusal: false,
+    medicalConditions: '', financialMeans: '',
   });
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const update = (field) => (e) => {
+    const val = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+    setForm({ ...form, [field]: val });
+  };
 
-  const nextStep = () => setStep((s) => Math.min(s + 1, 4));
-  const prevStep = () => setStep((s) => Math.max(s - 1, 1));
+  const next = () => step < 3 && setStep(step + 1);
+  const prev = () => step > 0 && setStep(step - 1);
 
-  const handleSubmit = async () => {
-    setLoading(true);
+  const submit = async () => {
+    setSaving(true);
     setError('');
     try {
-      await applicantAPI.create(form);
-      navigate('/eligibility');
+      const data = {
+        ...form,
+        qualifications: form.qualifications ? form.qualifications.split(',').map(q => ({ name: q.trim(), level: 'degree' })) : [],
+        employmentHistory: form.hasJobOffer ? [{ employer: form.employerName, current: true }] : [],
+        yearsExperience: parseInt(form.yearsExperience) || 0,
+      };
+      await applicantAPI.create(data);
+      navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to save profile');
+      setError(err.response?.data?.error || 'Failed to save profile.');
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
   return (
-    <div style={styles.page}>
-      <div style={styles.card}>
-        <div style={styles.header}>
-          <h1 style={styles.title}>Tell Us About Yourself</h1>
-          <p style={styles.subtitle}>This information helps us guide you to the right visa pathway.</p>
-        </div>
-
+    <div style={s.page}>
+      <div style={s.container}>
         {/* Progress */}
-        <div style={styles.progress}>
-          {[1, 2, 3, 4].map((s) => (
-            <div key={s} style={styles.progressItem}>
+        <div style={s.progressWrap}>
+          {STEPS.map((label, i) => (
+            <div key={i} style={s.progressStep}>
               <div style={{
-                ...styles.progressDot,
-                background: s <= step ? '#1a5632' : '#dee2e6',
-                color: s <= step ? '#fff' : '#6c757d',
-              }}>{s}</div>
-              <span style={{
-                ...styles.progressLabel,
-                color: s <= step ? '#1a5632' : '#adb5bd',
-                fontWeight: s === step ? 700 : 400,
+                ...s.dot,
+                background: i < step ? '#22c55e' : i === step ? '#d4a843' : 'rgba(255,255,255,0.06)',
+                color: i <= step ? '#09090b' : '#52525b',
+                border: i === step ? '2px solid #d4a843' : i < step ? '2px solid #22c55e' : '2px solid rgba(255,255,255,0.1)',
               }}>
-                {['Personal', 'Travel', 'Background', 'Review'][s - 1]}
-              </span>
+                {i < step ? '\u2713' : i + 1}
+              </div>
+              <span style={{ ...s.dotLabel, color: i === step ? '#fafafa' : '#52525b' }}>{label}</span>
+              {i < 3 && <div style={{ ...s.progressLine, background: i < step ? '#22c55e' : 'rgba(255,255,255,0.06)' }} />}
             </div>
           ))}
         </div>
 
-        {error && <div style={styles.error}>{error}</div>}
+        <div style={s.card}>
+          <h1 style={s.title}>
+            {step === 0 && 'Personal Information'}
+            {step === 1 && 'Travel & Purpose'}
+            {step === 2 && 'Background Check'}
+            {step === 3 && 'Review & Submit'}
+          </h1>
+          <p style={s.subtitle}>
+            {step === 0 && 'Tell us about yourself so we can assess your eligibility.'}
+            {step === 1 && 'What brings you to South Africa?'}
+            {step === 2 && 'Required for eligibility assessment under the Immigration Act.'}
+            {step === 3 && 'Please verify your information before submitting.'}
+          </p>
 
-        {/* Step 1: Personal Details */}
-        {step === 1 && (
-          <div>
-            <h2 style={styles.stepTitle}>Personal Information</h2>
-            <div className="input-group">
-              <label>Passport Number</label>
-              <input name="passportNumber" value={form.passportNumber} onChange={handleChange} placeholder="e.g. A12345678" required />
-            </div>
-            <div className="input-group">
-              <label>Nationality</label>
-              <select name="nationality" value={form.nationality} onChange={handleChange} required>
-                <option value="">Select your nationality</option>
-                {COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-            <div className="input-group">
-              <label>Country of Origin</label>
-              <select name="countryOfOrigin" value={form.countryOfOrigin} onChange={handleChange} required>
-                <option value="">Select country of origin</option>
-                {COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-            <div style={styles.row}>
-              <div className="input-group" style={{ flex: 1 }}>
-                <label>Date of Birth</label>
-                <input type="date" name="dateOfBirth" value={form.dateOfBirth} onChange={handleChange} required />
+          {error && <div style={s.error}>{error}</div>}
+
+          {/* Step 0: Personal */}
+          {step === 0 && (
+            <div>
+              <div className="input-group"><label>Passport Number</label><input placeholder="e.g. AB1234567" value={form.passportNumber} onChange={update('passportNumber')} required /></div>
+              <div style={s.row}>
+                <div className="input-group" style={{flex:1}}><label>Nationality</label>
+                  <select value={form.nationality} onChange={update('nationality')}>
+                    <option value="">Select nationality</option>
+                    {NATIONALITIES.map(n => <option key={n} value={n}>{n}</option>)}
+                  </select>
+                </div>
+                <div className="input-group" style={{flex:1}}><label>Country of Origin</label>
+                  <select value={form.countryOfOrigin} onChange={update('countryOfOrigin')}>
+                    <option value="">Select country</option>
+                    {NATIONALITIES.map(n => <option key={n} value={n}>{n}</option>)}
+                  </select>
+                </div>
               </div>
-              <div className="input-group" style={{ flex: 1 }}>
-                <label>Gender</label>
-                <select name="gender" value={form.gender} onChange={handleChange} required>
-                  <option value="">Select</option>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                  <option value="other">Other</option>
+              <div style={s.row}>
+                <div className="input-group" style={{flex:1}}><label>Date of Birth</label><input type="date" value={form.dateOfBirth} onChange={update('dateOfBirth')} /></div>
+                <div className="input-group" style={{flex:1}}><label>Gender</label>
+                  <select value={form.gender} onChange={update('gender')}>
+                    <option value="">Select</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Step 1: Travel */}
+          {step === 1 && (
+            <div>
+              <div className="input-group"><label>Purpose of Stay</label>
+                <select value={form.purposeOfStay} onChange={update('purposeOfStay')}>
+                  <option value="">Select purpose</option>
+                  {['Tourism','Business','Work','Study','Medical Treatment','Retirement','Join Family','Remote Work','Investment','Asylum'].map(p => <option key={p} value={p.toLowerCase()}>{p}</option>)}
                 </select>
               </div>
+              <div className="input-group"><label>Intended Duration</label>
+                <select value={form.intendedDuration} onChange={update('intendedDuration')}>
+                  <option value="">Select duration</option>
+                  {['Less than 90 days','3-6 months','6-12 months','1-3 years','3-5 years','Permanent'].map(d => <option key={d} value={d.toLowerCase().replace(/\s/g,'_')}>{d}</option>)}
+                </select>
+              </div>
+              <div style={s.checkRow}>
+                <input type="checkbox" checked={form.hasJobOffer} onChange={update('hasJobOffer')} id="job" />
+                <label htmlFor="job" style={s.checkLabel}>I have a confirmed job offer in South Africa</label>
+              </div>
+              {form.hasJobOffer && (
+                <div className="input-group"><label>Employer Name</label><input placeholder="Company name" value={form.employerName} onChange={update('employerName')} /></div>
+              )}
             </div>
-            <div className="input-group">
-              <label>Marital Status</label>
-              <select name="maritalStatus" value={form.maritalStatus} onChange={handleChange}>
-                <option value="">Select</option>
-                <option value="single">Single</option>
-                <option value="married">Married</option>
-                <option value="divorced">Divorced</option>
-                <option value="widowed">Widowed</option>
-                <option value="life_partner">Life Partner</option>
-              </select>
-            </div>
-          </div>
-        )}
+          )}
 
-        {/* Step 2: Travel Intent */}
-        {step === 2 && (
-          <div>
-            <h2 style={styles.stepTitle}>Travel & Stay Details</h2>
-            <div className="input-group">
-              <label>Purpose of Stay in South Africa</label>
-              <select name="purposeOfStay" value={form.purposeOfStay} onChange={handleChange} required>
-                <option value="">Select your purpose</option>
-                {PURPOSES.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
-              </select>
+          {/* Step 2: Background */}
+          {step === 2 && (
+            <div>
+              <div className="input-group"><label>Qualifications (comma-separated)</label><input placeholder="e.g. BSc Computer Science, MBA" value={form.qualifications} onChange={update('qualifications')} /></div>
+              <div style={s.row}>
+                <div className="input-group" style={{flex:1}}><label>Field of Study</label><input placeholder="e.g. Engineering" value={form.fieldOfStudy} onChange={update('fieldOfStudy')} /></div>
+                <div className="input-group" style={{flex:1}}><label>Years of Experience</label><input type="number" placeholder="0" value={form.yearsExperience} onChange={update('yearsExperience')} /></div>
+              </div>
+              <div className="input-group"><label>Financial Means</label>
+                <select value={form.financialMeans} onChange={update('financialMeans')}>
+                  <option value="">Select range</option>
+                  {['Under R50,000','R50,000 - R200,000','R200,000 - R500,000','R500,000 - R1,000,000','Over R1,000,000','R12,000,000+ (Financially Independent)'].map(f => <option key={f} value={f}>{f}</option>)}
+                </select>
+              </div>
+              <div style={s.divider} />
+              <p style={s.flagLabel}>Disqualifying Factors</p>
+              <div style={s.checkRow}><input type="checkbox" checked={form.hasCriminalRecord} onChange={update('hasCriminalRecord')} id="cr" /><label htmlFor="cr" style={s.checkLabel}>I have a criminal record</label></div>
+              <div style={s.checkRow}><input type="checkbox" checked={form.hasOverstayed} onChange={update('hasOverstayed')} id="os" /><label htmlFor="os" style={s.checkLabel}>I have previously overstayed a visa</label></div>
+              <div style={s.checkRow}><input type="checkbox" checked={form.hasPreviousRefusal} onChange={update('hasPreviousRefusal')} id="pr" /><label htmlFor="pr" style={s.checkLabel}>I have had a visa application refused</label></div>
             </div>
-            <div className="input-group">
-              <label>Intended Duration of Stay</label>
-              <select name="intendedDuration" value={form.intendedDuration} onChange={handleChange} required>
-                <option value="">Select duration</option>
-                <option value="less_than_30">Less than 30 days</option>
-                <option value="30_to_90">30 to 90 days</option>
-                <option value="90_to_180">3 to 6 months</option>
-                <option value="6_to_12_months">6 to 12 months</option>
-                <option value="1_to_3_years">1 to 3 years</option>
-                <option value="3_to_5_years">3 to 5 years</option>
-                <option value="permanent">Permanent</option>
-              </select>
-            </div>
-            <div className="input-group">
-              <label>Do you have family ties in South Africa?</label>
-              <select
-                value={form.familyTiesInSA?.relationship || ''}
-                onChange={(e) => setForm({
-                  ...form,
-                  familyTiesInSA: e.target.value ? { relationship: e.target.value } : null,
-                })}
-              >
-                <option value="">No family ties</option>
-                <option value="spouse">Spouse in SA</option>
-                <option value="life_partner">Life partner in SA</option>
-                <option value="parent">Parent in SA</option>
-                <option value="child">Child in SA</option>
-                <option value="sibling">Sibling in SA</option>
-                <option value="other_relative">Other relative in SA</option>
-              </select>
-            </div>
-          </div>
-        )}
+          )}
 
-        {/* Step 3: Background */}
-        {step === 3 && (
-          <div>
-            <h2 style={styles.stepTitle}>Qualifications & Background</h2>
-            <div className="input-group">
-              <label>Highest Qualification</label>
-              <select
-                value={form.qualifications?.[0]?.level || ''}
-                onChange={(e) => setForm({
-                  ...form,
-                  qualifications: e.target.value ? [{ level: e.target.value }] : [],
-                })}
-              >
-                <option value="">Select qualification</option>
-                <option value="high_school">High School / Matric</option>
-                <option value="diploma">Diploma / Certificate</option>
-                <option value="bachelors">Bachelor's Degree</option>
-                <option value="honours">Honours Degree</option>
-                <option value="masters">Master's Degree</option>
-                <option value="doctorate">Doctorate / PhD</option>
-                <option value="professional">Professional Qualification</option>
-              </select>
-            </div>
-            <div className="input-group">
-              <label>Do you have a job offer in South Africa?</label>
-              <select
-                value={form.hasJobOffer ? 'yes' : 'no'}
-                onChange={(e) => setForm({ ...form, hasJobOffer: e.target.value === 'yes' })}
-              >
-                <option value="no">No</option>
-                <option value="yes">Yes</option>
-              </select>
-            </div>
-            <div className="input-group">
-              <label>Monthly Income (ZAR equivalent)</label>
-              <input
-                type="number"
-                placeholder="e.g. 50000"
-                value={form.financialStanding?.monthlyIncome || ''}
-                onChange={(e) => setForm({
-                  ...form,
-                  financialStanding: {
-                    ...form.financialStanding,
-                    monthlyIncome: parseInt(e.target.value) || 0,
-                    annualIncome: (parseInt(e.target.value) || 0) * 12,
-                  },
-                })}
-              />
-            </div>
-            <div className="input-group">
-              <label>Do you have a criminal record?</label>
-              <select
-                value={form.hasCriminalRecord ? 'yes' : 'no'}
-                onChange={(e) => setForm({ ...form, hasCriminalRecord: e.target.value === 'yes' })}
-              >
-                <option value="no">No</option>
-                <option value="yes">Yes</option>
-              </select>
-            </div>
-          </div>
-        )}
-
-        {/* Step 4: Review */}
-        {step === 4 && (
-          <div>
-            <h2 style={styles.stepTitle}>Review Your Information</h2>
-            <p style={{ marginBottom: '1.5rem', color: '#6c757d', fontSize: '0.875rem' }}>
-              Please review the information below before proceeding to eligibility assessment.
-            </p>
-            <div style={styles.reviewGrid}>
+          {/* Step 3: Review */}
+          {step === 3 && (
+            <div>
               {[
-                ['Passport', form.passportNumber],
-                ['Nationality', form.nationality],
-                ['Country of Origin', form.countryOfOrigin],
-                ['Date of Birth', form.dateOfBirth],
-                ['Gender', form.gender],
-                ['Marital Status', form.maritalStatus],
-                ['Purpose of Stay', form.purposeOfStay],
-                ['Duration', form.intendedDuration],
-                ['Family in SA', form.familyTiesInSA?.relationship || 'None'],
-                ['Qualification', form.qualifications?.[0]?.level || 'Not specified'],
-                ['Job Offer', form.hasJobOffer ? 'Yes' : 'No'],
-                ['Criminal Record', form.hasCriminalRecord ? 'Yes' : 'No'],
-              ].map(([label, value], idx) => (
-                <div key={idx} style={styles.reviewItem}>
-                  <span style={styles.reviewLabel}>{label}</span>
-                  <span style={styles.reviewValue}>{value || 'Not provided'}</span>
+                { label: 'Passport', value: form.passportNumber },
+                { label: 'Nationality', value: form.nationality },
+                { label: 'Date of Birth', value: form.dateOfBirth },
+                { label: 'Purpose', value: form.purposeOfStay },
+                { label: 'Duration', value: form.intendedDuration?.replace(/_/g,' ') },
+                { label: 'Job Offer', value: form.hasJobOffer ? `Yes - ${form.employerName}` : 'No' },
+                { label: 'Qualifications', value: form.qualifications || 'None specified' },
+                { label: 'Experience', value: `${form.yearsExperience || 0} years` },
+                { label: 'Financial Means', value: form.financialMeans || 'Not specified' },
+                { label: 'Criminal Record', value: form.hasCriminalRecord ? 'Yes' : 'No' },
+                { label: 'Overstayed', value: form.hasOverstayed ? 'Yes' : 'No' },
+                { label: 'Previous Refusal', value: form.hasPreviousRefusal ? 'Yes' : 'No' },
+              ].map((item, i) => (
+                <div key={i} style={s.reviewRow}>
+                  <span style={s.reviewLabel}>{item.label}</span>
+                  <span style={s.reviewValue}>{item.value || '—'}</span>
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Navigation */}
-        <div style={styles.nav}>
-          {step > 1 && (
-            <button className="btn btn-outline" onClick={prevStep}>Back</button>
-          )}
-          <div style={{ flex: 1 }} />
-          {step < 4 ? (
-            <button className="btn btn-primary" onClick={nextStep}>Continue</button>
-          ) : (
-            <button className="btn btn-primary btn-lg" onClick={handleSubmit} disabled={loading}>
-              {loading ? 'Saving...' : 'Save & Check Eligibility'}
-            </button>
-          )}
+          {/* Actions */}
+          <div style={s.actions}>
+            {step > 0 && <button className="btn btn-secondary" onClick={prev}>Back</button>}
+            <div style={{ flex: 1 }} />
+            {step < 3 ? (
+              <button className="btn btn-primary" onClick={next}>Continue</button>
+            ) : (
+              <button className="btn btn-primary" onClick={submit} disabled={saving}>
+                {saving ? 'Saving...' : 'Submit Profile'}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-const styles = {
-  page: {
-    minHeight: 'calc(100vh - 64px)',
-    padding: '2rem',
-    background: '#f8f9fa',
-  },
-  card: {
-    background: '#fff',
-    borderRadius: 16,
-    padding: '2.5rem',
-    maxWidth: 640,
-    margin: '0 auto',
-    boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
-  },
-  header: { textAlign: 'center', marginBottom: '1.5rem' },
-  title: { fontSize: '1.5rem', fontWeight: 800, color: '#1a5632' },
-  subtitle: { color: '#6c757d', fontSize: '0.875rem', marginTop: '0.25rem' },
-  progress: {
-    display: 'flex',
-    justifyContent: 'center',
-    gap: '2rem',
-    marginBottom: '2rem',
-    paddingBottom: '1.5rem',
-    borderBottom: '1px solid #e9ecef',
-  },
-  progressItem: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '0.375rem',
-  },
-  progressDot: {
-    width: 32,
-    height: 32,
-    borderRadius: '50%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '0.8125rem',
-    fontWeight: 700,
-  },
-  progressLabel: { fontSize: '0.75rem' },
-  error: {
-    background: '#f8d7da',
-    color: '#721c24',
-    padding: '0.75rem 1rem',
-    borderRadius: 8,
-    marginBottom: '1.5rem',
-    fontSize: '0.875rem',
-  },
-  stepTitle: {
-    fontSize: '1.125rem',
-    fontWeight: 700,
-    marginBottom: '1.5rem',
-    color: '#212529',
-  },
-  row: { display: 'flex', gap: '1rem' },
-  reviewGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-    gap: '0.75rem',
-  },
-  reviewItem: {
-    padding: '0.75rem',
-    background: '#f8f9fa',
-    borderRadius: 8,
-  },
-  reviewLabel: {
-    display: 'block',
-    fontSize: '0.6875rem',
-    fontWeight: 600,
-    color: '#6c757d',
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px',
-  },
-  reviewValue: {
-    fontSize: '0.9375rem',
-    fontWeight: 600,
-    color: '#212529',
-  },
-  nav: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    marginTop: '2rem',
-    paddingTop: '1.5rem',
-    borderTop: '1px solid #e9ecef',
-  },
+const s = {
+  page: { paddingTop: 88, paddingBottom: 48, minHeight: '100vh' },
+  container: { maxWidth: 600, margin: '0 auto', padding: '0 24px' },
+  progressWrap: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0, marginBottom: 32 },
+  progressStep: { display: 'flex', alignItems: 'center', gap: 0 },
+  dot: { width: 32, height: 32, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, flexShrink: 0, transition: 'all 0.3s' },
+  dotLabel: { fontSize: 11, fontWeight: 600, marginLeft: 6, letterSpacing: '0.02em', whiteSpace: 'nowrap' },
+  progressLine: { width: 40, height: 2, borderRadius: 2, margin: '0 8px', transition: 'background 0.3s' },
+  card: { background: '#1a1a1d', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 20, padding: '36px 32px' },
+  title: { fontSize: 22, fontWeight: 800, color: '#fafafa', letterSpacing: '-0.02em', marginBottom: 6 },
+  subtitle: { fontSize: 14, color: '#a1a1aa', marginBottom: 28 },
+  error: { background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444', padding: '10px 14px', borderRadius: 10, fontSize: 13, marginBottom: 20 },
+  row: { display: 'flex', gap: 12 },
+  checkRow: { display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0' },
+  checkLabel: { fontSize: 14, color: '#a1a1aa', cursor: 'pointer' },
+  divider: { height: 1, background: 'rgba(255,255,255,0.06)', margin: '20px 0' },
+  flagLabel: { fontSize: 13, fontWeight: 600, color: '#f59e0b', marginBottom: 8 },
+  reviewRow: { display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' },
+  reviewLabel: { fontSize: 13, color: '#52525b', fontWeight: 500 },
+  reviewValue: { fontSize: 14, color: '#fafafa', fontWeight: 600, textAlign: 'right' },
+  actions: { display: 'flex', gap: 12, marginTop: 28, paddingTop: 20, borderTop: '1px solid rgba(255,255,255,0.06)' },
 };

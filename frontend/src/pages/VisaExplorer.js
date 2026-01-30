@@ -3,103 +3,94 @@ import { Link } from 'react-router-dom';
 import { visaAPI } from '../services/api';
 
 export default function VisaExplorer() {
-  const [data, setData] = useState({ groups: [], categories: [] });
-  const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('all');
+  const [categories, setCategories] = useState([]);
+  const [groups, setGroups] = useState([]);
   const [search, setSearch] = useState('');
+  const [activeGroup, setActiveGroup] = useState('all');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
       try {
-        const res = await visaAPI.getCategories();
-        setData(res.data);
-      } catch { /* fallback to empty */ }
+        const [catRes, grpRes] = await Promise.all([visaAPI.getCategories(), visaAPI.getGroups()]);
+        setCategories(catRes.data.categories || []);
+        setGroups(grpRes.data.groups || []);
+      } catch {}
       setLoading(false);
     }
     load();
   }, []);
 
-  if (loading) {
-    return <div style={styles.loading}>Loading visa categories...</div>;
-  }
-
-  const filtered = data.categories.filter((cat) => {
-    const matchGroup = filter === 'all' || cat.category === filter;
-    const matchSearch = !search || cat.name.toLowerCase().includes(search.toLowerCase()) ||
-      cat.description.toLowerCase().includes(search.toLowerCase());
-    return matchGroup && matchSearch;
-  });
+  if (loading) return <div style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: 64 }}><div className="spinner" /></div>;
 
   const groupColors = {
-    temporary_residence: '#17a2b8',
-    work_permit: '#1a5632',
+    temporary_residence: '#3b82f6',
+    work_permit: '#22c55e',
     family: '#d4a843',
-    permanent_residence: '#002395',
-    refugee: '#6c757d',
+    permanent_residence: '#a855f7',
+    refugee: '#ef4444',
   };
 
+  const filtered = categories.filter(c => {
+    const matchSearch = !search || c.name.toLowerCase().includes(search.toLowerCase()) || c.description.toLowerCase().includes(search.toLowerCase());
+    const matchGroup = activeGroup === 'all' || c.category === activeGroup;
+    return matchSearch && matchGroup;
+  });
+
   return (
-    <div style={styles.page}>
+    <div style={s.page}>
       <div className="container">
-        <div style={styles.header}>
-          <h1 style={styles.title}>South African Visa Categories</h1>
-          <p style={styles.subtitle}>
-            Complete coverage of all Department of Home Affairs immigration categories.
-            Based on the Immigration Act 13 of 2002 (as amended).
-          </p>
+        <div style={s.header}>
+          <h1 style={s.title}>Visa Categories</h1>
+          <p style={s.subtitle}>Explore all South African visa and permit types. Each category includes full eligibility criteria, required documents, and application guidance.</p>
         </div>
 
-        {/* Filters */}
-        <div style={styles.filters}>
-          <input
-            type="text"
-            placeholder="Search visa categories..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={styles.searchInput}
-          />
-          <div style={styles.filterTabs}>
-            <button
-              style={{ ...styles.filterTab, ...(filter === 'all' ? styles.filterTabActive : {}) }}
-              onClick={() => setFilter('all')}
-            >All ({data.categories.length})</button>
-            {data.groups.map((g) => (
-              <button
-                key={g.id}
-                style={{ ...styles.filterTab, ...(filter === g.id ? styles.filterTabActive : {}) }}
-                onClick={() => setFilter(g.id)}
-              >{g.name} ({g.categories.length})</button>
-            ))}
-          </div>
+        {/* Search */}
+        <div style={s.searchWrap}>
+          <input type="text" placeholder="Search visa categories..." value={search} onChange={(e) => setSearch(e.target.value)} style={s.searchInput} />
         </div>
 
-        {/* Grid */}
-        <div style={styles.grid}>
-          {filtered.map((cat) => (
-            <Link key={cat.id} to={`/visas/${cat.id}`} style={styles.card}>
-              <div style={styles.cardBadge}>
-                <span style={{
-                  ...styles.badge,
-                  background: (groupColors[cat.category] || '#6c757d') + '15',
-                  color: groupColors[cat.category] || '#6c757d',
-                }}>
-                  {cat.category.replace(/_/g, ' ')}
+        {/* Filter Tabs */}
+        <div style={s.filters}>
+          <button style={{ ...s.filterBtn, ...(activeGroup === 'all' ? s.filterActive : {}) }} onClick={() => setActiveGroup('all')}>
+            All ({categories.length})
+          </button>
+          {groups.map(g => {
+            const count = categories.filter(c => c.category === g.id).length;
+            return (
+              <button key={g.id} style={{ ...s.filterBtn, ...(activeGroup === g.id ? { ...s.filterActive, background: (groupColors[g.id] || '#52525b') + '20', color: groupColors[g.id] || '#fafafa', borderColor: (groupColors[g.id] || '#52525b') + '40' } : {}) }} onClick={() => setActiveGroup(g.id)}>
+                {g.name} ({count})
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Results */}
+        <p style={s.resultCount}>{filtered.length} visa {filtered.length === 1 ? 'category' : 'categories'} found</p>
+
+        <div style={s.grid}>
+          {filtered.map(cat => (
+            <Link key={cat.id} to={`/visas/${cat.id}`} style={s.card}>
+              <div style={s.cardTop}>
+                <div style={{ ...s.cardDot, background: groupColors[cat.category] || '#52525b' }} />
+                <span style={{ ...s.cardBadge, background: (groupColors[cat.category] || '#52525b') + '18', color: groupColors[cat.category] || '#a1a1aa' }}>
+                  {cat.maxDuration}
                 </span>
               </div>
-              <h3 style={styles.cardTitle}>{cat.name}</h3>
-              <p style={styles.cardDesc}>{cat.description}</p>
-              <div style={styles.cardMeta}>
-                <span style={styles.metaItem}>Duration: {cat.maxDuration}</span>
-                <span style={styles.metaItem}>Fee: {cat.fees?.application || 'Varies'}</span>
+              <h3 style={s.cardTitle}>{cat.name}</h3>
+              <p style={s.cardDesc}>{cat.description}</p>
+              <div style={s.cardFooter}>
+                <span style={s.cardLegal}>{cat.legalReference}</span>
+                <span style={s.cardArrow}>&rarr;</span>
               </div>
-              <div style={styles.cardLegal}>{cat.legalReference}</div>
             </Link>
           ))}
         </div>
 
         {filtered.length === 0 && (
-          <div style={styles.empty}>
-            <p>No visa categories match your search. Try different keywords.</p>
+          <div style={s.empty}>
+            <p style={s.emptyText}>No visa categories match your search.</p>
+            <button className="btn btn-secondary" onClick={() => { setSearch(''); setActiveGroup('all'); }}>Clear Filters</button>
           </div>
         )}
       </div>
@@ -107,98 +98,27 @@ export default function VisaExplorer() {
   );
 }
 
-const styles = {
-  page: { padding: '2rem 0' },
-  loading: { textAlign: 'center', padding: '4rem', color: '#6c757d' },
-  header: { textAlign: 'center', marginBottom: '2rem' },
-  title: { fontSize: '1.75rem', fontWeight: 800, color: '#1a5632' },
-  subtitle: { color: '#6c757d', fontSize: '0.9375rem', marginTop: '0.5rem', maxWidth: 600, margin: '0.5rem auto 0' },
-  filters: { marginBottom: '2rem' },
-  searchInput: {
-    width: '100%',
-    padding: '0.75rem 1rem',
-    border: '1px solid #dee2e6',
-    borderRadius: 10,
-    fontSize: '0.9375rem',
-    marginBottom: '1rem',
-    fontFamily: 'inherit',
-  },
-  filterTabs: {
-    display: 'flex',
-    gap: '0.5rem',
-    flexWrap: 'wrap',
-  },
-  filterTab: {
-    padding: '0.375rem 0.875rem',
-    border: '1px solid #dee2e6',
-    borderRadius: 999,
-    background: '#fff',
-    fontSize: '0.8125rem',
-    color: '#495057',
-    cursor: 'pointer',
-    transition: 'all 0.2s',
-    fontFamily: 'inherit',
-  },
-  filterTabActive: {
-    background: '#1a5632',
-    color: '#fff',
-    borderColor: '#1a5632',
-  },
-  grid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-    gap: '1rem',
-  },
-  card: {
-    display: 'block',
-    background: '#fff',
-    borderRadius: 12,
-    padding: '1.5rem',
-    border: '1px solid #e9ecef',
-    textDecoration: 'none',
-    color: 'inherit',
-    transition: 'all 0.2s',
-  },
-  cardBadge: { marginBottom: '0.75rem' },
-  badge: {
-    display: 'inline-block',
-    padding: '0.25rem 0.625rem',
-    borderRadius: 999,
-    fontSize: '0.6875rem',
-    fontWeight: 600,
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px',
-  },
-  cardTitle: {
-    fontSize: '1.0625rem',
-    fontWeight: 700,
-    color: '#212529',
-    marginBottom: '0.5rem',
-  },
-  cardDesc: {
-    fontSize: '0.8125rem',
-    color: '#6c757d',
-    lineHeight: 1.5,
-    marginBottom: '0.75rem',
-  },
-  cardMeta: {
-    display: 'flex',
-    gap: '1rem',
-    marginBottom: '0.5rem',
-  },
-  metaItem: {
-    fontSize: '0.75rem',
-    color: '#495057',
-    fontWeight: 500,
-  },
-  cardLegal: {
-    fontSize: '0.6875rem',
-    color: '#adb5bd',
-    fontStyle: 'italic',
-  },
-  empty: {
-    textAlign: 'center',
-    padding: '3rem',
-    color: '#6c757d',
-  },
+const s = {
+  page: { paddingTop: 88, paddingBottom: 48, minHeight: '100vh' },
+  header: { marginBottom: 32 },
+  title: { fontSize: 32, fontWeight: 800, color: '#fafafa', letterSpacing: '-0.02em', marginBottom: 8 },
+  subtitle: { fontSize: 15, color: '#a1a1aa', lineHeight: 1.6, maxWidth: 600 },
+  searchWrap: { marginBottom: 20 },
+  searchInput: { width: '100%', padding: '14px 18px', background: '#1a1a1d', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, fontSize: 15, color: '#fafafa', fontFamily: 'inherit', outline: 'none', transition: 'all 0.2s' },
+  filters: { display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 24 },
+  filterBtn: { padding: '7px 14px', background: 'transparent', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 12, fontWeight: 600, color: '#a1a1aa', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s', whiteSpace: 'nowrap' },
+  filterActive: { background: 'rgba(212,168,67,0.12)', color: '#d4a843', borderColor: 'rgba(212,168,67,0.3)' },
+  resultCount: { fontSize: 13, color: '#52525b', marginBottom: 16 },
+  grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 14 },
+  card: { background: '#1a1a1d', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '22px 20px', textDecoration: 'none', display: 'flex', flexDirection: 'column', gap: 10, transition: 'all 0.25s ease' },
+  cardTop: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+  cardDot: { width: 8, height: 8, borderRadius: '50%' },
+  cardBadge: { fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 999 },
+  cardTitle: { fontSize: 16, fontWeight: 700, color: '#fafafa' },
+  cardDesc: { fontSize: 13, color: '#a1a1aa', lineHeight: 1.6, flex: 1 },
+  cardFooter: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.04)' },
+  cardLegal: { fontSize: 11, color: '#52525b', fontStyle: 'italic' },
+  cardArrow: { fontSize: 16, color: '#d4a843' },
+  empty: { textAlign: 'center', padding: '60px 0' },
+  emptyText: { fontSize: 15, color: '#52525b', marginBottom: 16 },
 };

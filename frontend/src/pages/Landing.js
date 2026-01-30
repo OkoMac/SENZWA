@@ -3,110 +3,115 @@ import { Link } from 'react-router-dom';
 
 export default function Landing() {
   return (
-    <div>
-      {/* Hero Section */}
+    <div style={{ paddingTop: 64 }}>
+      {/* Hero */}
       <section style={styles.hero}>
+        <div style={styles.heroGlow} />
         <div style={styles.heroContent}>
           <div style={styles.heroBadge}>
-            Powered by South African Immigration Law
+            AI-Powered Immigration Platform
           </div>
           <h1 style={styles.heroTitle}>
-            The Intelligent Infrastructure for{' '}
-            <span style={styles.heroHighlight}>Migration into South Africa</span>
+            Migration into<br />
+            South Africa,{' '}
+            <span style={styles.heroGold}>simplified.</span>
           </h1>
-          <p style={styles.heroSubtitle}>
-            AI-guided visa pathway selection, dynamic document validation, and structured
-            application compilation. Migration made clear, lawfully guided, and accountable by design.
+          <p style={styles.heroSub}>
+            Intelligent visa pathway selection, real-time document validation,
+            and structured application compilation. Built on the Immigration Act 13 of 2002.
           </p>
           <div style={styles.heroCTA}>
             <Link to="/register" className="btn btn-primary btn-lg">
               Start Your Journey
             </Link>
-            <Link to="/register" className="btn btn-outline btn-lg">
-              Check Eligibility
+            <Link to="/knowledge" className="btn btn-secondary btn-lg">
+              Explore Knowledge Hub
             </Link>
           </div>
           <div style={styles.heroStats}>
-            <div style={styles.stat}>
-              <span style={styles.statNumber}>22+</span>
-              <span style={styles.statLabel}>Visa Categories</span>
-            </div>
-            <div style={styles.stat}>
-              <span style={styles.statNumber}>60%</span>
-              <span style={styles.statLabel}>Error Reduction</span>
-            </div>
-            <div style={styles.stat}>
-              <span style={styles.statNumber}>24/7</span>
-              <span style={styles.statLabel}>AI Guidance</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Problem Section */}
-      <section style={styles.section}>
-        <div className="container">
-          <h2 style={styles.sectionTitle}>A Broken System Needs Intelligent Solutions</h2>
-          <p style={styles.sectionSubtitle}>
-            The current South African immigration process is fragmented, manual, and opaque.
-          </p>
-          <div style={styles.problemGrid}>
             {[
-              { title: 'For Applicants', desc: 'Fragmented information, complex legal requirements, high rejection rates due to incorrect documentation.' },
-              { title: 'For Service Providers', desc: 'Manual screening of every application, repetitive validation, limited scalability.' },
-              { title: 'For Government', desc: 'Poorly prepared applications, inconsistent data quality, unnecessary resubmissions.' },
-            ].map((item, idx) => (
-              <div key={idx} style={styles.problemCard}>
-                <h3 style={styles.problemTitle}>{item.title}</h3>
-                <p style={styles.problemDesc}>{item.desc}</p>
+              { num: '22+', label: 'Visa Categories' },
+              { num: '80+', label: 'Critical Skills' },
+              { num: '24/7', label: 'AI Guidance' },
+            ].map((s, i) => (
+              <div key={i} style={styles.stat}>
+                <span style={styles.statNum}>{s.num}</span>
+                <span style={styles.statLabel}>{s.label}</span>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* How It Works */}
-      <section style={{ ...styles.section, background: '#fff' }}>
+      {/* Problem */}
+      <section style={styles.section}>
         <div className="container">
-          <h2 style={styles.sectionTitle}>How Senzwa Works</h2>
-          <p style={styles.sectionSubtitle}>Five steps from confusion to clarity</p>
-          <div style={styles.stepsGrid}>
+          <div style={styles.sectionLabel}>THE PROBLEM</div>
+          <h2 style={styles.sectionTitle}>
+            A broken system needs<br />intelligent solutions
+          </h2>
+          <div style={styles.grid3}>
             {[
-              { step: '1', title: 'Intelligent Onboarding', desc: 'Register and tell us about yourself: nationality, purpose of stay, qualifications, and circumstances.' },
-              { step: '2', title: 'AI Visa Pathway Selection', desc: 'Our rules engine evaluates all visa categories against South African immigration law and recommends the best pathway.' },
-              { step: '3', title: 'Document Compilation', desc: 'Dynamic checklists specific to your visa category, nationality, and circumstances. Real-time validation as you upload.' },
-              { step: '4', title: 'WhatsApp Engagement', desc: 'Get guided through the entire process via WhatsApp. Reminders, updates, and plain-language explanations.' },
-              { step: '5', title: 'Structured Output', desc: 'Fully compiled, validated application package formatted to DHA/VFS standards with complete audit trails.' },
-            ].map((item, idx) => (
-              <div key={idx} style={styles.stepCard}>
-                <div style={styles.stepNumber}>{item.step}</div>
-                <h3 style={styles.stepTitle}>{item.title}</h3>
-                <p style={styles.stepDesc}>{item.desc}</p>
+              { title: 'For Applicants', desc: 'Fragmented information, complex legal requirements, and high rejection rates due to incorrect documentation.', icon: '01' },
+              { title: 'For Service Providers', desc: 'Manual screening of every application, repetitive validation tasks, and limited scalability.', icon: '02' },
+              { title: 'For Government', desc: 'Poorly prepared applications, inconsistent data quality, and unnecessary processing delays.', icon: '03' },
+            ].map((item, i) => (
+              <div key={i} style={styles.problemCard}>
+                <div style={styles.problemNum}>{item.icon}</div>
+                <h3 style={styles.cardTitle}>{item.title}</h3>
+                <p style={styles.cardDesc}>{item.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Visa Coverage */}
+      {/* How it works */}
+      <section style={{ ...styles.section, background: 'var(--bg-elevated)' }}>
+        <div className="container">
+          <div style={styles.sectionLabel}>HOW IT WORKS</div>
+          <h2 style={styles.sectionTitle}>Five steps from confusion to clarity</h2>
+          <div style={styles.stepsContainer}>
+            {[
+              { step: '01', title: 'Onboarding', desc: 'Tell us about yourself - nationality, purpose of stay, qualifications, and circumstances.' },
+              { step: '02', title: 'AI Assessment', desc: 'Our rules engine evaluates all visa categories against South African immigration law.' },
+              { step: '03', title: 'Document Compilation', desc: 'Dynamic checklists specific to your visa category with real-time validation.' },
+              { step: '04', title: 'WhatsApp Guidance', desc: 'Get guided through the entire process via WhatsApp with reminders and updates.' },
+              { step: '05', title: 'Structured Output', desc: 'Fully compiled, validated application package formatted to DHA/VFS standards.' },
+            ].map((item, i) => (
+              <div key={i} style={styles.stepItem}>
+                <div style={styles.stepLeft}>
+                  <div style={styles.stepNum}>{item.step}</div>
+                  {i < 4 && <div style={styles.stepLine} />}
+                </div>
+                <div style={styles.stepRight}>
+                  <h3 style={styles.stepTitle}>{item.title}</h3>
+                  <p style={styles.stepDesc}>{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Coverage */}
       <section style={styles.section}>
         <div className="container">
-          <h2 style={styles.sectionTitle}>Complete Home Affairs Coverage</h2>
-          <p style={styles.sectionSubtitle}>
-            Every Department of Home Affairs immigration category, fully supported.
-          </p>
-          <div style={styles.coverageGrid}>
+          <div style={styles.sectionLabel}>COMPLETE COVERAGE</div>
+          <h2 style={styles.sectionTitle}>Every DHA category, fully supported</h2>
+          <div style={styles.grid4}>
             {[
-              { title: 'Temporary Residence', items: ['Tourist Visa', 'Business Visa', 'Study Visa', 'Medical Treatment', 'Remote Work', 'Retired Person', 'Exchange Visa'] },
-              { title: 'Work & Business', items: ['General Work Visa', 'Critical Skills Visa', 'Intra-Company Transfer', 'Corporate Visa', 'Business & Investment'] },
-              { title: 'Family & Relationship', items: ["Relative's Visa", 'Spousal Visa', 'Life Partner Visa'] },
-              { title: 'Permanent Residence', items: ['Section 26 (Direct)', 'Work-based PR', 'Business-based PR', 'Financially Independent', 'Extraordinary Skills'] },
-            ].map((group, idx) => (
-              <div key={idx} style={styles.coverageCard}>
+              { title: 'Temporary Residence', items: ['Tourist Visa', 'Business Visa', 'Study Visa', 'Medical Treatment', 'Remote Work', 'Retired Person', 'Exchange Visa'], color: '#3b82f6' },
+              { title: 'Work & Business', items: ['General Work Visa', 'Critical Skills Visa', 'Intra-Company Transfer', 'Corporate Visa', 'Business & Investment'], color: '#22c55e' },
+              { title: 'Family & Relationship', items: ["Relative's Visa", 'Spousal Visa', 'Life Partner Visa'], color: '#d4a843' },
+              { title: 'Permanent Residence', items: ['Section 26 (Direct)', 'Work-based PR', 'Business-based PR', 'Financially Independent', 'Extraordinary Skills'], color: '#a855f7' },
+            ].map((group, i) => (
+              <div key={i} style={styles.coverageCard}>
+                <div style={{ ...styles.coverageDot, background: group.color }} />
                 <h3 style={styles.coverageTitle}>{group.title}</h3>
                 <ul style={styles.coverageList}>
-                  {group.items.map((item, i) => (
-                    <li key={i} style={styles.coverageItem}>{item}</li>
+                  {group.items.map((item, j) => (
+                    <li key={j} style={styles.coverageItem}>{item}</li>
                   ))}
                 </ul>
               </div>
@@ -116,21 +121,22 @@ export default function Landing() {
       </section>
 
       {/* Accountability */}
-      <section style={{ ...styles.section, background: '#1a5632', color: '#fff' }}>
+      <section style={{ ...styles.section, background: 'var(--bg-elevated)' }}>
         <div className="container">
-          <h2 style={{ ...styles.sectionTitle, color: '#fff' }}>Radical Accountability</h2>
-          <p style={{ ...styles.sectionSubtitle, color: 'rgba(255,255,255,0.8)' }}>
-            Every action logged. Every decision documented. Every stakeholder protected.
-          </p>
-          <div style={styles.accountGrid}>
+          <div style={styles.sectionLabel}>ACCOUNTABILITY</div>
+          <h2 style={styles.sectionTitle}>
+            Every action logged.{' '}
+            <span style={styles.heroGold}>Every decision documented.</span>
+          </h2>
+          <div style={styles.grid3}>
             {[
-              { title: 'Complete Audit Trails', desc: 'Timestamped logs of every interaction, document upload, validation result, and communication.' },
-              { title: 'Clear Responsibility', desc: 'AI guides. Applicants submit. Service providers process. Government adjudicates.' },
-              { title: 'Trust Through Transparency', desc: 'Reduced corruption risk, legal defensibility, and improved public trust.' },
-            ].map((item, idx) => (
-              <div key={idx} style={styles.accountCard}>
+              { title: 'Complete Audit Trails', desc: 'Timestamped logs of every interaction, upload, validation, and communication throughout the process.' },
+              { title: 'Clear Responsibility', desc: 'AI guides. Applicants submit. Service providers process. Government adjudicates. No ambiguity.' },
+              { title: 'Trust & Transparency', desc: 'Reduced corruption risk, legal defensibility, and improved public trust in the immigration process.' },
+            ].map((item, i) => (
+              <div key={i} style={styles.accountCard}>
                 <h3 style={styles.accountTitle}>{item.title}</h3>
-                <p style={styles.accountDesc}>{item.desc}</p>
+                <p style={styles.cardDesc}>{item.desc}</p>
               </div>
             ))}
           </div>
@@ -138,16 +144,13 @@ export default function Landing() {
       </section>
 
       {/* CTA */}
-      <section style={{ ...styles.section, textAlign: 'center' }}>
-        <div className="container">
-          <h2 style={styles.sectionTitle}>Ready to Start Your Migration Journey?</h2>
-          <p style={styles.sectionSubtitle}>
-            Migration made clear. Lawfully guided. Accountable by design.
-          </p>
-          <div style={{ marginTop: '2rem' }}>
-            <Link to="/register" className="btn btn-primary btn-lg">
-              Create Your Account
-            </Link>
+      <section style={styles.ctaSection}>
+        <div className="container" style={{ textAlign: 'center' }}>
+          <h2 style={styles.ctaTitle}>Ready to start your migration journey?</h2>
+          <p style={styles.ctaSub}>Migration made clear. Lawfully guided. Accountable by design.</p>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Link to="/register" className="btn btn-primary btn-lg">Create Free Account</Link>
+            <Link to="/knowledge" className="btn btn-outline btn-lg">Browse Knowledge Hub</Link>
           </div>
         </div>
       </section>
@@ -155,27 +158,19 @@ export default function Landing() {
       {/* Footer */}
       <footer style={styles.footer}>
         <div className="container">
-          <div style={styles.footerContent}>
+          <div style={styles.footerTop}>
             <div>
-              <div style={styles.footerLogo}>SENZWA MigrateSA</div>
-              <p style={styles.footerText}>
-                The Intelligent Infrastructure for Migration into South Africa
-              </p>
+              <div style={styles.footerLogo}>SENZWA</div>
+              <p style={styles.footerText}>The Intelligent Infrastructure for Migration into South Africa</p>
             </div>
-            <div style={styles.footerLinks}>
-              <p style={styles.footerText}>
-                Based on the Immigration Act 13 of 2002 (as amended)
-              </p>
-              <p style={styles.footerText}>
-                POPIA and GDPR Compliant
-              </p>
+            <div style={{ textAlign: 'right' }}>
+              <p style={styles.footerText}>Based on the Immigration Act 13 of 2002</p>
+              <p style={styles.footerText}>POPIA and GDPR Compliant</p>
             </div>
           </div>
           <div style={styles.footerBottom}>
-            <p style={styles.footerCopy}>&copy; 2026 Senzwa. All rights reserved.</p>
-            <p style={styles.footerDisclaimer}>
-              Senzwa provides guidance only. All final visa decisions are made by the Department of Home Affairs.
-            </p>
+            <span style={styles.footerMuted}>&copy; 2026 Senzwa. All rights reserved.</span>
+            <span style={styles.footerDisclaimer}>Senzwa provides guidance only. Final visa decisions are made by the Department of Home Affairs.</span>
           </div>
         </div>
       </footer>
@@ -184,230 +179,50 @@ export default function Landing() {
 }
 
 const styles = {
-  hero: {
-    background: 'linear-gradient(135deg, #1a5632 0%, #0e3a21 60%, #1a1a2e 100%)',
-    color: '#fff',
-    padding: '5rem 1.5rem',
-    textAlign: 'center',
-  },
-  heroContent: {
-    maxWidth: 800,
-    margin: '0 auto',
-  },
-  heroBadge: {
-    display: 'inline-block',
-    padding: '0.375rem 1rem',
-    background: 'rgba(255,255,255,0.15)',
-    borderRadius: 999,
-    fontSize: '0.8125rem',
-    fontWeight: 500,
-    marginBottom: '1.5rem',
-    border: '1px solid rgba(255,255,255,0.2)',
-  },
-  heroTitle: {
-    fontSize: 'clamp(2rem, 5vw, 3.25rem)',
-    fontWeight: 800,
-    lineHeight: 1.15,
-    marginBottom: '1.25rem',
-  },
-  heroHighlight: {
-    color: '#d4a843',
-  },
-  heroSubtitle: {
-    fontSize: '1.125rem',
-    lineHeight: 1.6,
-    color: 'rgba(255,255,255,0.85)',
-    marginBottom: '2rem',
-    maxWidth: 640,
-    margin: '0 auto 2rem',
-  },
-  heroCTA: {
-    display: 'flex',
-    gap: '1rem',
-    justifyContent: 'center',
-    flexWrap: 'wrap',
-    marginBottom: '3rem',
-  },
-  heroStats: {
-    display: 'flex',
-    justifyContent: 'center',
-    gap: '3rem',
-    flexWrap: 'wrap',
-  },
-  stat: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-  },
-  statNumber: {
-    fontSize: '2rem',
-    fontWeight: 800,
-    color: '#d4a843',
-  },
-  statLabel: {
-    fontSize: '0.8125rem',
-    color: 'rgba(255,255,255,0.7)',
-    fontWeight: 500,
-  },
-  section: {
-    padding: '5rem 0',
-  },
-  sectionTitle: {
-    fontSize: '2rem',
-    fontWeight: 800,
-    textAlign: 'center',
-    marginBottom: '0.75rem',
-    color: '#212529',
-  },
-  sectionSubtitle: {
-    fontSize: '1.0625rem',
-    color: '#6c757d',
-    textAlign: 'center',
-    marginBottom: '3rem',
-    maxWidth: 600,
-    margin: '0 auto 3rem',
-  },
-  problemGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-    gap: '1.5rem',
-  },
-  problemCard: {
-    background: '#fff',
-    borderRadius: 12,
-    padding: '2rem',
-    border: '1px solid #e9ecef',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-  },
-  problemTitle: {
-    fontSize: '1.25rem',
-    fontWeight: 700,
-    marginBottom: '0.75rem',
-    color: '#c4342d',
-  },
-  problemDesc: {
-    fontSize: '0.9375rem',
-    color: '#6c757d',
-    lineHeight: 1.6,
-  },
-  stepsGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-    gap: '1.5rem',
-  },
-  stepCard: {
-    textAlign: 'center',
-    padding: '1.5rem',
-  },
-  stepNumber: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    background: '#1a5632',
-    color: '#fff',
-    fontWeight: 800,
-    fontSize: '1.25rem',
-    marginBottom: '1rem',
-  },
-  stepTitle: {
-    fontSize: '1.0625rem',
-    fontWeight: 700,
-    marginBottom: '0.5rem',
-  },
-  stepDesc: {
-    fontSize: '0.875rem',
-    color: '#6c757d',
-    lineHeight: 1.5,
-  },
-  coverageGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-    gap: '1.5rem',
-  },
-  coverageCard: {
-    background: '#fff',
-    borderRadius: 12,
-    padding: '1.5rem',
-    border: '1px solid #e9ecef',
-  },
-  coverageTitle: {
-    fontSize: '1.125rem',
-    fontWeight: 700,
-    marginBottom: '1rem',
-    color: '#1a5632',
-  },
-  coverageList: {
-    listStyle: 'none',
-    padding: 0,
-  },
-  coverageItem: {
-    padding: '0.375rem 0',
-    fontSize: '0.875rem',
-    color: '#495057',
-    borderBottom: '1px solid #f1f3f5',
-  },
-  accountGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-    gap: '1.5rem',
-  },
-  accountCard: {
-    background: 'rgba(255,255,255,0.1)',
-    borderRadius: 12,
-    padding: '2rem',
-    border: '1px solid rgba(255,255,255,0.15)',
-  },
-  accountTitle: {
-    fontSize: '1.25rem',
-    fontWeight: 700,
-    marginBottom: '0.75rem',
-  },
-  accountDesc: {
-    fontSize: '0.9375rem',
-    color: 'rgba(255,255,255,0.8)',
-    lineHeight: 1.6,
-  },
-  footer: {
-    background: '#1a1a2e',
-    color: '#fff',
-    padding: '3rem 0 1.5rem',
-  },
-  footerContent: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    flexWrap: 'wrap',
-    gap: '2rem',
-    marginBottom: '2rem',
-  },
-  footerLogo: {
-    fontSize: '1.25rem',
-    fontWeight: 800,
-    marginBottom: '0.5rem',
-  },
-  footerText: {
-    fontSize: '0.875rem',
-    color: 'rgba(255,255,255,0.6)',
-    lineHeight: 1.6,
-  },
-  footerLinks: {},
-  footerBottom: {
-    borderTop: '1px solid rgba(255,255,255,0.1)',
-    paddingTop: '1.5rem',
-    display: 'flex',
-    justifyContent: 'space-between',
-    flexWrap: 'wrap',
-    gap: '1rem',
-  },
-  footerCopy: {
-    fontSize: '0.8125rem',
-    color: 'rgba(255,255,255,0.5)',
-  },
-  footerDisclaimer: {
-    fontSize: '0.75rem',
-    color: 'rgba(255,255,255,0.4)',
-    fontStyle: 'italic',
-  },
+  hero: { position: 'relative', padding: '120px 24px 100px', textAlign: 'center', overflow: 'hidden', background: '#09090b' },
+  heroGlow: { position: 'absolute', top: '10%', left: '50%', transform: 'translateX(-50%)', width: 600, height: 400, background: 'radial-gradient(ellipse, rgba(212,168,67,0.12) 0%, transparent 70%)', pointerEvents: 'none' },
+  heroContent: { position: 'relative', maxWidth: 720, margin: '0 auto' },
+  heroBadge: { display: 'inline-block', padding: '6px 16px', background: 'rgba(212,168,67,0.1)', border: '1px solid rgba(212,168,67,0.2)', borderRadius: 9999, fontSize: 12, fontWeight: 600, color: '#d4a843', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 32 },
+  heroTitle: { fontSize: 'clamp(36px, 6vw, 64px)', fontWeight: 800, lineHeight: 1.08, letterSpacing: '-0.03em', color: '#fafafa', marginBottom: 24 },
+  heroGold: { color: '#d4a843' },
+  heroSub: { fontSize: 17, lineHeight: 1.7, color: '#a1a1aa', maxWidth: 540, margin: '0 auto 40px' },
+  heroCTA: { display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 64 },
+  heroStats: { display: 'flex', justifyContent: 'center', gap: 48, flexWrap: 'wrap' },
+  stat: { display: 'flex', flexDirection: 'column', alignItems: 'center' },
+  statNum: { fontSize: 32, fontWeight: 800, color: '#d4a843', letterSpacing: '-0.02em' },
+  statLabel: { fontSize: 12, fontWeight: 500, color: '#52525b', letterSpacing: '0.05em', textTransform: 'uppercase', marginTop: 4 },
+  section: { padding: '100px 0' },
+  sectionLabel: { fontSize: 11, fontWeight: 700, color: '#d4a843', letterSpacing: '0.12em', textTransform: 'uppercase', textAlign: 'center', marginBottom: 16 },
+  sectionTitle: { fontSize: 'clamp(28px, 4vw, 40px)', fontWeight: 800, textAlign: 'center', letterSpacing: '-0.02em', lineHeight: 1.15, color: '#fafafa', marginBottom: 56 },
+  grid3: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 },
+  grid4: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 },
+  problemCard: { background: '#1a1a1d', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: '32px 28px' },
+  problemNum: { fontSize: 13, fontWeight: 700, color: '#d4a843', letterSpacing: '0.05em', marginBottom: 16 },
+  cardTitle: { fontSize: 18, fontWeight: 700, color: '#fafafa', marginBottom: 10 },
+  cardDesc: { fontSize: 14, lineHeight: 1.7, color: '#a1a1aa' },
+  stepsContainer: { maxWidth: 600, margin: '0 auto' },
+  stepItem: { display: 'flex', gap: 24, position: 'relative' },
+  stepLeft: { display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 },
+  stepNum: { width: 48, height: 48, borderRadius: 14, background: '#1a1a1d', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: '#d4a843', flexShrink: 0 },
+  stepLine: { width: 1, flex: 1, background: 'rgba(255,255,255,0.06)', margin: '8px 0', minHeight: 24 },
+  stepRight: { paddingBottom: 40 },
+  stepTitle: { fontSize: 17, fontWeight: 700, color: '#fafafa', marginBottom: 6 },
+  stepDesc: { fontSize: 14, lineHeight: 1.6, color: '#a1a1aa' },
+  coverageCard: { background: '#1a1a1d', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '24px 20px' },
+  coverageDot: { width: 8, height: 8, borderRadius: '50%', marginBottom: 14 },
+  coverageTitle: { fontSize: 16, fontWeight: 700, color: '#fafafa', marginBottom: 14 },
+  coverageList: { listStyle: 'none', padding: 0, margin: 0 },
+  coverageItem: { padding: '6px 0', fontSize: 13, color: '#a1a1aa', borderBottom: '1px solid rgba(255,255,255,0.06)' },
+  accountCard: { background: '#1a1a1d', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: '32px 28px' },
+  accountTitle: { fontSize: 18, fontWeight: 700, color: '#fafafa', marginBottom: 10 },
+  ctaSection: { padding: '100px 0', background: '#09090b' },
+  ctaTitle: { fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.15, color: '#fafafa', marginBottom: 16 },
+  ctaSub: { fontSize: 16, color: '#a1a1aa', marginBottom: 36, lineHeight: 1.6 },
+  footer: { background: '#111113', borderTop: '1px solid rgba(255,255,255,0.06)', padding: '48px 0 24px' },
+  footerTop: { display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 32, marginBottom: 32 },
+  footerLogo: { fontSize: 18, fontWeight: 800, color: '#fafafa', letterSpacing: '0.08em', marginBottom: 8 },
+  footerText: { fontSize: 13, color: '#52525b', lineHeight: 1.6 },
+  footerBottom: { borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 20, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 },
+  footerMuted: { fontSize: 12, color: '#3f3f46' },
+  footerDisclaimer: { fontSize: 11, color: '#3f3f46', fontStyle: 'italic' },
 };

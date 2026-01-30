@@ -1,184 +1,153 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { visaAPI, applicationAPI } from '../services/api';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { visaAPI } from '../services/api';
 
 export default function VisaDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [category, setCategory] = useState(null);
+  const [visa, setVisa] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     async function load() {
       try {
         const res = await visaAPI.getCategory(id);
-        setCategory(res.data.category);
-      } catch { /* error */ }
+        setVisa(res.data.category || res.data);
+      } catch {}
       setLoading(false);
     }
     load();
   }, [id]);
 
-  const startApplication = async () => {
-    setCreating(true);
-    try {
-      const res = await applicationAPI.create({ visaCategoryId: id });
-      navigate(`/applications/${res.data.application.id}`);
-    } catch (err) {
-      alert(err.response?.data?.error || 'Failed to create application. Please complete onboarding first.');
-    } finally {
-      setCreating(false);
-    }
-  };
+  if (loading) return <div style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: 64 }}><div className="spinner" /></div>;
+  if (!visa) return <div style={{ textAlign: 'center', paddingTop: 120, color: '#52525b' }}>Visa category not found.</div>;
 
-  if (loading) return <div style={s.loading}>Loading visa details...</div>;
-  if (!category) return <div style={s.loading}>Visa category not found.</div>;
+  const groupColors = { temporary_residence: '#3b82f6', work_permit: '#22c55e', family: '#d4a843', permanent_residence: '#a855f7', refugee: '#ef4444' };
+  const color = groupColors[visa.category] || '#a1a1aa';
 
   return (
     <div style={s.page}>
-      <div className="container" style={{ maxWidth: 800 }}>
-        <button onClick={() => navigate('/visas')} style={s.back}>&#8592; Back to All Visas</button>
+      <div className="container-md">
+        <button onClick={() => navigate('/visas')} style={s.back}>&larr; All Visa Categories</button>
 
-        <div style={s.header}>
-          <span style={s.badge}>{category.category.replace(/_/g, ' ')}</span>
-          <h1 style={s.title}>{category.name}</h1>
-          <p style={s.subtitle}>{category.description}</p>
-          <div style={s.meta}>
-            <span style={s.metaItem}>Duration: {category.maxDuration}</span>
-            <span style={s.metaItem}>Fee: {category.fees?.application || 'Varies'}</span>
-            <span style={s.metaItem}>{category.legalReference}</span>
+        {/* Hero */}
+        <div style={s.hero}>
+          <div style={{ ...s.heroDot, background: color }} />
+          <h1 style={s.heroTitle}>{visa.name}</h1>
+          <p style={s.heroDesc}>{visa.description}</p>
+          <div style={s.heroMeta}>
+            <span style={{ ...s.metaBadge, background: color + '18', color }}>{visa.maxDuration}</span>
+            <span style={s.legalRef}>{visa.legalReference}</span>
           </div>
         </div>
 
         {/* Eligibility */}
-        <section style={s.section}>
+        <div style={s.section}>
           <h2 style={s.sectionTitle}>Eligibility Requirements</h2>
-          <div style={s.list}>
-            {category.eligibility.requirements.map((req, i) => (
+          <div style={s.listWrap}>
+            {(visa.eligibility?.requirements || []).map((req, i) => (
               <div key={i} style={s.listItem}>
-                <span style={s.checkIcon}>&#10003;</span>
-                <span>{req}</span>
+                <span style={{ ...s.listIcon, color: '#22c55e' }}>{'\u2713'}</span>
+                <span style={s.listText}>{req}</span>
               </div>
             ))}
           </div>
-        </section>
+        </div>
 
         {/* Disqualifiers */}
-        <section style={s.section}>
-          <h2 style={s.sectionTitle}>Disqualifying Factors</h2>
-          <div style={s.list}>
-            {category.eligibility.disqualifiers.map((d, i) => (
-              <div key={i} style={{ ...s.listItem, borderColor: '#f8d7da' }}>
-                <span style={{ ...s.checkIcon, color: '#dc3545' }}>&#10007;</span>
-                <span>{d}</span>
+        <div style={s.section}>
+          <h2 style={{ ...s.sectionTitle, color: '#ef4444' }}>Disqualifying Factors</h2>
+          <div style={s.listWrap}>
+            {(visa.eligibility?.disqualifiers || []).map((d, i) => (
+              <div key={i} style={s.listItem}>
+                <span style={{ ...s.listIcon, color: '#ef4444' }}>{'\u2717'}</span>
+                <span style={s.listText}>{d}</span>
               </div>
             ))}
           </div>
-        </section>
+        </div>
 
         {/* Documents */}
-        <section style={s.section}>
+        <div style={s.section}>
           <h2 style={s.sectionTitle}>Required Documents</h2>
           <div style={s.docGrid}>
-            {category.requiredDocuments.map((doc, i) => (
-              <div key={i} style={s.docCard}>
+            {(visa.requiredDocuments || []).map((doc, i) => (
+              <div key={i} style={{ ...s.docCard, borderLeftColor: doc.required ? '#d4a843' : 'rgba(255,255,255,0.06)' }}>
                 <div style={s.docHeader}>
                   <span style={s.docName}>{doc.name}</span>
-                  <span style={{
-                    ...s.docBadge,
-                    background: doc.required ? '#d4edda' : '#fff3cd',
-                    color: doc.required ? '#155724' : '#856404',
-                  }}>
-                    {doc.required ? 'Required' : 'Optional'}
+                  <span style={{ ...s.docBadge, background: doc.required ? 'rgba(212,168,67,0.12)' : 'rgba(255,255,255,0.06)', color: doc.required ? '#d4a843' : '#52525b' }}>
+                    {doc.required ? 'REQUIRED' : 'OPTIONAL'}
                   </span>
                 </div>
                 <p style={s.docDesc}>{doc.description}</p>
               </div>
             ))}
           </div>
-        </section>
+        </div>
 
-        {/* Common Rejection Reasons */}
-        <section style={s.section}>
-          <h2 style={s.sectionTitle}>Common Rejection Reasons</h2>
-          <div style={s.warningBox}>
-            {category.commonRejectionReasons.map((reason, i) => (
-              <div key={i} style={s.warningItem}>
-                <span style={s.warningIcon}>&#9888;</span>
-                <span>{reason}</span>
+        {/* Rejection Reasons */}
+        <div style={s.section}>
+          <h2 style={{ ...s.sectionTitle, color: '#f59e0b' }}>Common Rejection Reasons</h2>
+          <div style={s.listWrap}>
+            {(visa.commonRejectionReasons || []).map((r, i) => (
+              <div key={i} style={s.listItem}>
+                <span style={{ ...s.listIcon, color: '#f59e0b' }}>{'\u26A0'}</span>
+                <span style={s.listText}>{r}</span>
               </div>
             ))}
           </div>
-        </section>
+        </div>
+
+        {/* Fees */}
+        {visa.fees && (
+          <div style={s.section}>
+            <h2 style={s.sectionTitle}>Fees</h2>
+            <div style={s.feeRow}>
+              {Object.entries(visa.fees).map(([key, val]) => (
+                <div key={key} style={s.feeCard}>
+                  <span style={s.feeLabel}>{key.replace(/_/g, ' ')}</span>
+                  <span style={s.feeValue}>{val}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* CTA */}
         <div style={s.cta}>
-          <button className="btn btn-primary btn-lg" onClick={startApplication} disabled={creating}>
-            {creating ? 'Creating...' : 'Start Application for This Visa'}
-          </button>
-          <button className="btn btn-outline btn-lg" onClick={() => navigate('/eligibility')}>
-            Check My Eligibility First
-          </button>
+          <Link to="/eligibility" className="btn btn-primary btn-lg">Check Your Eligibility</Link>
+          <Link to="/knowledge" className="btn btn-secondary btn-lg">View Knowledge Hub</Link>
         </div>
-
-        <p style={s.disclaimer}>
-          Disclaimer: This information is based on the Immigration Act 13 of 2002 (as amended) and current DHA regulations.
-          Final decisions on all visa applications are made by the Department of Home Affairs.
-        </p>
       </div>
     </div>
   );
 }
 
 const s = {
-  page: { padding: '2rem 0' },
-  loading: { textAlign: 'center', padding: '4rem', color: '#6c757d' },
-  back: {
-    background: 'none', border: 'none', color: '#1a5632', fontWeight: 600,
-    fontSize: '0.875rem', cursor: 'pointer', marginBottom: '1.5rem', padding: 0,
-    fontFamily: 'inherit',
-  },
-  header: { marginBottom: '2rem' },
-  badge: {
-    display: 'inline-block', padding: '0.25rem 0.75rem', borderRadius: 999,
-    fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase',
-    background: '#e8f5e9', color: '#1a5632', marginBottom: '0.75rem',
-  },
-  title: { fontSize: '1.75rem', fontWeight: 800, color: '#212529', marginBottom: '0.5rem' },
-  subtitle: { fontSize: '1rem', color: '#6c757d', lineHeight: 1.6 },
-  meta: { display: 'flex', gap: '1.5rem', marginTop: '1rem', flexWrap: 'wrap' },
-  metaItem: { fontSize: '0.8125rem', color: '#495057', fontWeight: 500 },
-  section: {
-    background: '#fff', borderRadius: 12, padding: '1.5rem',
-    border: '1px solid #e9ecef', marginBottom: '1.5rem',
-  },
-  sectionTitle: { fontSize: '1.125rem', fontWeight: 700, marginBottom: '1rem', color: '#212529' },
-  list: { display: 'flex', flexDirection: 'column', gap: '0.5rem' },
-  listItem: {
-    display: 'flex', gap: '0.75rem', alignItems: 'flex-start',
-    padding: '0.5rem 0.75rem', background: '#f8f9fa', borderRadius: 8,
-    fontSize: '0.875rem', borderLeft: '3px solid #d4edda',
-  },
-  checkIcon: { color: '#28a745', fontWeight: 700, flexShrink: 0 },
-  docGrid: { display: 'flex', flexDirection: 'column', gap: '0.75rem' },
-  docCard: { padding: '0.75rem', background: '#f8f9fa', borderRadius: 8 },
-  docHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' },
-  docName: { fontWeight: 600, fontSize: '0.875rem' },
-  docBadge: { padding: '0.125rem 0.5rem', borderRadius: 999, fontSize: '0.6875rem', fontWeight: 600 },
-  docDesc: { fontSize: '0.8125rem', color: '#6c757d' },
-  warningBox: {
-    background: '#fff8e1', borderRadius: 8, padding: '1rem',
-    display: 'flex', flexDirection: 'column', gap: '0.5rem',
-  },
-  warningItem: { display: 'flex', gap: '0.5rem', fontSize: '0.875rem', color: '#856404' },
-  warningIcon: { flexShrink: 0 },
-  cta: {
-    display: 'flex', gap: '1rem', justifyContent: 'center',
-    flexWrap: 'wrap', marginTop: '2rem', marginBottom: '1.5rem',
-  },
-  disclaimer: {
-    fontSize: '0.75rem', color: '#adb5bd', fontStyle: 'italic',
-    textAlign: 'center', lineHeight: 1.5,
-  },
+  page: { paddingTop: 88, paddingBottom: 48, minHeight: '100vh' },
+  back: { background: 'none', border: 'none', color: '#a1a1aa', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 24, padding: 0, display: 'block', transition: 'color 0.2s' },
+  hero: { marginBottom: 40 },
+  heroDot: { width: 10, height: 10, borderRadius: '50%', marginBottom: 16 },
+  heroTitle: { fontSize: 32, fontWeight: 800, color: '#fafafa', letterSpacing: '-0.02em', marginBottom: 12 },
+  heroDesc: { fontSize: 16, color: '#a1a1aa', lineHeight: 1.7, marginBottom: 16 },
+  heroMeta: { display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' },
+  metaBadge: { padding: '5px 14px', borderRadius: 999, fontSize: 12, fontWeight: 600 },
+  legalRef: { fontSize: 12, color: '#52525b', fontStyle: 'italic' },
+  section: { background: '#1a1a1d', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: '28px 24px', marginBottom: 16 },
+  sectionTitle: { fontSize: 17, fontWeight: 700, color: '#fafafa', marginBottom: 16 },
+  listWrap: { display: 'flex', flexDirection: 'column', gap: 8 },
+  listItem: { display: 'flex', gap: 10, alignItems: 'flex-start' },
+  listIcon: { fontWeight: 700, fontSize: 14, flexShrink: 0, marginTop: 1 },
+  listText: { fontSize: 14, color: '#a1a1aa', lineHeight: 1.6 },
+  docGrid: { display: 'flex', flexDirection: 'column', gap: 8 },
+  docCard: { background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '14px 16px', borderLeft: '3px solid' },
+  docHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
+  docName: { fontSize: 14, fontWeight: 600, color: '#fafafa' },
+  docBadge: { fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: '0.05em' },
+  docDesc: { fontSize: 12, color: '#52525b' },
+  feeRow: { display: 'flex', gap: 12, flexWrap: 'wrap' },
+  feeCard: { background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: 120 },
+  feeLabel: { fontSize: 11, color: '#52525b', textTransform: 'capitalize', fontWeight: 500 },
+  feeValue: { fontSize: 16, fontWeight: 700, color: '#d4a843' },
+  cta: { display: 'flex', gap: 12, marginTop: 32, flexWrap: 'wrap' },
 };

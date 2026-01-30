@@ -1,320 +1,185 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { applicantAPI, applicationAPI } from '../services/api';
+import { applicantAPI, applicationAPI, eligibilityAPI } from '../services/api';
 
 export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [applicant, setApplicant] = useState(null);
+  const [profile, setProfile] = useState(null);
   const [applications, setApplications] = useState([]);
+  const [evaluation, setEvaluation] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
       try {
-        const [appRes, appsRes] = await Promise.allSettled([
-          applicantAPI.getMe(),
-          applicationAPI.list(),
+        const [profRes, appRes] = await Promise.all([
+          applicantAPI.getMe().catch(() => null),
+          applicationAPI.list().catch(() => ({ data: { applications: [] } })),
         ]);
-        if (appRes.status === 'fulfilled') setApplicant(appRes.value.data.applicant);
-        if (appsRes.status === 'fulfilled') setApplications(appsRes.value.data.applications || []);
-      } catch { /* ignored */ }
+        if (profRes?.data?.applicant) setProfile(profRes.data.applicant);
+        setApplications(appRes?.data?.applications || []);
+        try {
+          const evalRes = await eligibilityAPI.getMyEvaluation();
+          setEvaluation(evalRes.data);
+        } catch {}
+      } catch {}
       setLoading(false);
     }
     load();
   }, []);
 
-  if (loading) {
-    return <div style={styles.loading}>Loading your dashboard...</div>;
-  }
+  if (loading) return (
+    <div style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: 64 }}>
+      <div className="spinner" />
+    </div>
+  );
 
-  const statusColors = {
-    draft: '#6c757d', documents_pending: '#ffc107', under_review: '#17a2b8',
-    compiled: '#002395', submitted: '#1a5632', approved: '#28a745', rejected: '#dc3545',
+  const steps = [
+    { num: '01', title: 'Create Profile', desc: 'Set up your applicant profile with personal and travel details', done: !!profile, link: '/onboarding', action: profile ? 'Update Profile' : 'Start Onboarding' },
+    { num: '02', title: 'Check Eligibility', desc: 'AI-powered assessment across all 22+ visa categories', done: !!evaluation, link: '/eligibility', action: 'Check Now' },
+    { num: '03', title: 'Start Application', desc: 'Begin your visa application with the recommended pathway', done: applications.length > 0, link: '/visas', action: 'Browse Visas' },
+    { num: '04', title: 'Upload Documents', desc: 'Upload and validate all required documentation', done: applications.some(a => a.status !== 'draft'), link: applications[0] ? `/applications/${applications[0].id}/documents` : '/visas', action: 'Upload' },
+    { num: '05', title: 'Track & Submit', desc: 'Monitor progress and compile your application package', done: applications.some(a => ['compiled', 'submitted', 'approved'].includes(a.status)), link: '/tracker', action: 'Track' },
+  ];
+
+  const completedSteps = steps.filter(s => s.done).length;
+
+  const statusConfig = {
+    draft: { color: '#a1a1aa', bg: 'rgba(255,255,255,0.06)' },
+    documents_pending: { color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
+    under_review: { color: '#3b82f6', bg: 'rgba(59,130,246,0.1)' },
+    compiled: { color: '#a855f7', bg: 'rgba(168,85,247,0.1)' },
+    submitted: { color: '#22c55e', bg: 'rgba(34,197,94,0.1)' },
+    approved: { color: '#22c55e', bg: 'rgba(34,197,94,0.15)' },
+    rejected: { color: '#ef4444', bg: 'rgba(239,68,68,0.1)' },
   };
 
   return (
-    <div style={styles.page}>
-      <div className="container">
-        {/* Welcome Banner */}
-        <div style={styles.welcome}>
+    <div style={s.page}>
+      <div className="container-lg">
+        {/* Header */}
+        <div style={s.header}>
           <div>
-            <h1 style={styles.welcomeTitle}>Welcome, {user.firstName}!</h1>
-            <p style={styles.welcomeText}>
-              {applicant
-                ? 'Your migration journey is underway. Here is your dashboard.'
-                : 'Complete your profile to start your migration journey.'}
-            </p>
+            <h1 style={s.greeting}>Welcome back, {user?.firstName || 'there'}</h1>
+            <p style={s.subGreeting}>Your migration journey at a glance</p>
           </div>
-          {!applicant && (
-            <button className="btn btn-secondary btn-lg" onClick={() => navigate('/onboarding')}>
-              Complete Profile
-            </button>
-          )}
+          <div style={s.progressBadge}>
+            <span style={s.progressNum}>{completedSteps}</span>
+            <span style={s.progressLabel}>of 5 steps complete</span>
+          </div>
         </div>
 
-        {/* Journey Steps - Seamless Flow Guide */}
-        <div style={styles.journeyContainer}>
-          <h2 style={styles.journeyTitle}>Your Migration Journey</h2>
-          <div style={styles.journey}>
-            {[
-              { step: 1, label: 'Create Profile', desc: 'Tell us about yourself', link: '/onboarding', done: !!applicant },
-              { step: 2, label: 'Check Eligibility', desc: 'Find your best visa pathway', link: '/eligibility', done: applications.length > 0 },
-              { step: 3, label: 'Start Application', desc: 'Choose a visa and apply', link: '/visas', done: applications.length > 0 },
-              { step: 4, label: 'Upload Documents', desc: 'Submit required documents', link: applications.length > 0 ? `/applications/${applications[0]?.id}/documents` : '/visas', done: applications.some((a) => a.status !== 'draft') },
-              { step: 5, label: 'Track & Submit', desc: 'Monitor your application', link: '/tracker', done: applications.some((a) => ['compiled', 'submitted', 'approved'].includes(a.status)) },
-            ].map((item, idx) => (
-              <div key={idx} style={styles.journeyStep} onClick={() => navigate(item.link)}>
+        {/* Progress Bar */}
+        <div style={s.progressBar}>
+          <div style={{ ...s.progressFill, width: `${(completedSteps / 5) * 100}%` }} />
+        </div>
+
+        {/* Journey Steps */}
+        <div style={s.stepsGrid}>
+          {steps.map((step, i) => (
+            <div key={i} style={{ ...s.stepCard, ...(step.done ? s.stepDone : {}), ...(i === completedSteps ? s.stepCurrent : {}) }}>
+              <div style={s.stepTop}>
                 <div style={{
-                  ...styles.journeyDot,
-                  background: item.done ? '#28a745' : idx === 0 || (idx > 0 && applicant) ? '#1a5632' : '#dee2e6',
-                  color: item.done || idx === 0 || applicant ? '#fff' : '#adb5bd',
+                  ...s.stepNum,
+                  background: step.done ? 'rgba(34,197,94,0.15)' : i === completedSteps ? 'rgba(212,168,67,0.15)' : 'rgba(255,255,255,0.04)',
+                  color: step.done ? '#22c55e' : i === completedSteps ? '#d4a843' : '#52525b',
                 }}>
-                  {item.done ? '\u2713' : item.step}
+                  {step.done ? '\u2713' : step.num}
                 </div>
-                <div style={styles.journeyInfo}>
-                  <span style={{
-                    ...styles.journeyLabel,
-                    color: item.done ? '#28a745' : '#212529',
-                  }}>{item.label}</span>
-                  <span style={styles.journeyDesc}>{item.desc}</span>
-                </div>
-                {idx < 4 && <div style={{ ...styles.journeyLine, background: item.done ? '#28a745' : '#dee2e6' }} />}
+                {i === completedSteps && <span style={s.currentBadge}>NEXT</span>}
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Quick Actions */}
-        <div style={styles.actions}>
-          <div style={styles.actionCard} onClick={() => navigate('/eligibility')}>
-            <div style={styles.actionIcon}>&#x2714;</div>
-            <h3 style={styles.actionTitle}>Check Eligibility</h3>
-            <p style={styles.actionDesc}>AI-powered visa pathway assessment</p>
-          </div>
-          <div style={styles.actionCard} onClick={() => navigate('/knowledge')}>
-            <div style={styles.actionIcon}>&#x1F4DA;</div>
-            <h3 style={styles.actionTitle}>Knowledge Hub</h3>
-            <p style={styles.actionDesc}>All immigration info in one place</p>
-          </div>
-          <div style={styles.actionCard} onClick={() => navigate('/visas')}>
-            <div style={styles.actionIcon}>&#x1F4CB;</div>
-            <h3 style={styles.actionTitle}>Explore Visas</h3>
-            <p style={styles.actionDesc}>Browse all 22+ visa categories</p>
-          </div>
-          <div style={styles.actionCard} onClick={() => navigate('/tracker')}>
-            <div style={styles.actionIcon}>&#x1F50D;</div>
-            <h3 style={styles.actionTitle}>Track Application</h3>
-            <p style={styles.actionDesc}>Real-time application tracking</p>
-          </div>
+              <h3 style={s.stepTitle}>{step.title}</h3>
+              <p style={s.stepDesc}>{step.desc}</p>
+              <Link to={step.link} className={`btn ${i === completedSteps ? 'btn-primary' : 'btn-secondary'} btn-sm`} style={{ marginTop: 'auto' }}>
+                {step.action}
+              </Link>
+            </div>
+          ))}
         </div>
 
         {/* Applications */}
-        <div style={styles.section}>
-          <div style={styles.sectionHeader}>
-            <h2 style={styles.sectionTitle}>My Applications</h2>
-          </div>
-
-          {applications.length === 0 ? (
-            <div style={styles.empty}>
-              <p style={styles.emptyText}>You haven't started any applications yet.</p>
-              <p style={styles.emptyHint}>
-                Begin by checking your <Link to="/eligibility" style={styles.link}>eligibility</Link> or
-                exploring <Link to="/visas" style={styles.link}>visa categories</Link>.
-              </p>
+        {applications.length > 0 && (
+          <div style={s.section}>
+            <div style={s.sectionHeader}>
+              <h2 style={s.sectionTitle}>Your Applications</h2>
+              <Link to="/tracker" style={s.seeAll}>View Tracker</Link>
             </div>
-          ) : (
-            <div style={styles.appGrid}>
-              {applications.map((app) => (
-                <div key={app.id} style={styles.appCard} onClick={() => navigate(`/applications/${app.id}`)}>
-                  <div style={styles.appHeader}>
-                    <span style={styles.appCategory}>{app.visaCategoryId}</span>
-                    <span style={{
-                      ...styles.appStatus,
-                      background: statusColors[app.status] + '20',
-                      color: statusColors[app.status],
-                    }}>
+            <div style={s.appList}>
+              {applications.slice(0, 3).map((app) => {
+                const sc = statusConfig[app.status] || statusConfig.draft;
+                return (
+                  <div key={app.id} style={s.appCard} onClick={() => navigate(`/applications/${app.id}`)}>
+                    <div style={s.appInfo}>
+                      <span style={s.appType}>{(app.visaCategoryId || 'application').replace(/_/g, ' ')}</span>
+                      <span style={s.appDate}>{new Date(app.createdAt).toLocaleDateString()}</span>
+                    </div>
+                    <span style={{ ...s.appStatus, background: sc.bg, color: sc.color }}>
                       {app.status.replace(/_/g, ' ')}
                     </span>
                   </div>
-                  <div style={styles.appMeta}>
-                    <span>ID: {app.id.slice(0, 8)}</span>
-                    <span>Created: {new Date(app.createdAt).toLocaleDateString()}</span>
-                  </div>
-                  {app.eligibilityScore !== null && (
-                    <div style={styles.appScore}>
-                      Eligibility: {app.eligibilityScore}%
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Profile Summary */}
-        {applicant && (
-          <div style={styles.section}>
-            <h2 style={styles.sectionTitle}>Profile Summary</h2>
-            <div style={styles.profileGrid}>
-              <div style={styles.profileItem}>
-                <span style={styles.profileLabel}>Nationality</span>
-                <span style={styles.profileValue}>{applicant.nationality}</span>
-              </div>
-              <div style={styles.profileItem}>
-                <span style={styles.profileLabel}>Purpose of Stay</span>
-                <span style={styles.profileValue}>{applicant.purposeOfStay}</span>
-              </div>
-              <div style={styles.profileItem}>
-                <span style={styles.profileLabel}>Passport</span>
-                <span style={styles.profileValue}>{applicant.passportNumber}</span>
-              </div>
-              <div style={styles.profileItem}>
-                <span style={styles.profileLabel}>Status</span>
-                <span style={styles.profileValue}>{applicant.onboardingComplete ? 'Complete' : 'Incomplete'}</span>
-              </div>
+                );
+              })}
             </div>
           </div>
         )}
+
+        {/* Quick Actions */}
+        <div style={s.section}>
+          <h2 style={s.sectionTitle}>Quick Actions</h2>
+          <div style={s.quickGrid}>
+            {[
+              { label: 'Knowledge Hub', desc: 'All immigration info in one place', link: '/knowledge', icon: '\u{1F4D6}' },
+              { label: 'Explore Visas', desc: 'Browse all 22+ visa categories', link: '/visas', icon: '\u{1F30D}' },
+              { label: 'Check Eligibility', desc: 'AI assessment of your profile', link: '/eligibility', icon: '\u{2713}' },
+              { label: 'Track Applications', desc: 'Monitor your active applications', link: '/tracker', icon: '\u{1F4CA}' },
+            ].map((item, i) => (
+              <Link key={i} to={item.link} style={s.quickCard}>
+                <span style={s.quickIcon}>{item.icon}</span>
+                <span style={s.quickLabel}>{item.label}</span>
+                <span style={s.quickDesc}>{item.desc}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
-const styles = {
-  page: { padding: '2rem 0' },
-  loading: { textAlign: 'center', padding: '4rem', color: '#6c757d' },
-  welcome: {
-    background: 'linear-gradient(135deg, #1a5632, #2d7a4a)',
-    borderRadius: 16,
-    padding: '2rem 2.5rem',
-    color: '#fff',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: '1rem',
-    marginBottom: '2rem',
-  },
-  welcomeTitle: { fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.25rem' },
-  welcomeText: { fontSize: '0.9375rem', opacity: 0.85 },
-  journeyContainer: { marginBottom: '2rem' },
-  journeyTitle: { fontSize: '1rem', fontWeight: 700, marginBottom: '1rem', color: '#495057' },
-  journey: {
-    display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '1.5rem',
-    background: '#fff', borderRadius: 12, border: '1px solid #e9ecef', overflowX: 'auto',
-  },
-  journeyStep: {
-    display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer',
-    minWidth: 100, flex: 1, position: 'relative', textAlign: 'center',
-  },
-  journeyDot: {
-    width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center',
-    justifyContent: 'center', fontWeight: 700, fontSize: '0.875rem', marginBottom: '0.5rem',
-  },
-  journeyInfo: { display: 'flex', flexDirection: 'column', alignItems: 'center' },
-  journeyLabel: { fontSize: '0.75rem', fontWeight: 700 },
-  journeyDesc: { fontSize: '0.625rem', color: '#6c757d' },
-  journeyLine: { position: 'absolute', top: 18, left: '60%', right: '-40%', height: 3, borderRadius: 2 },
-  actions: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-    gap: '1rem',
-    marginBottom: '2rem',
-  },
-  actionCard: {
-    background: '#fff',
-    borderRadius: 12,
-    padding: '1.5rem',
-    border: '1px solid #e9ecef',
-    cursor: 'pointer',
-    transition: 'all 0.2s',
-    textAlign: 'center',
-  },
-  actionIcon: { fontSize: '2rem', marginBottom: '0.75rem' },
-  actionTitle: { fontSize: '1rem', fontWeight: 700, marginBottom: '0.25rem' },
-  actionDesc: { fontSize: '0.8125rem', color: '#6c757d' },
-  section: { marginBottom: '2rem' },
-  sectionHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '1rem',
-  },
-  sectionTitle: { fontSize: '1.25rem', fontWeight: 700 },
-  empty: {
-    background: '#fff',
-    borderRadius: 12,
-    padding: '3rem',
-    textAlign: 'center',
-    border: '1px solid #e9ecef',
-  },
-  emptyText: { fontSize: '1.0625rem', fontWeight: 600, color: '#495057', marginBottom: '0.5rem' },
-  emptyHint: { fontSize: '0.875rem', color: '#6c757d' },
-  link: { color: '#1a5632', fontWeight: 600 },
-  appGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-    gap: '1rem',
-  },
-  appCard: {
-    background: '#fff',
-    borderRadius: 12,
-    padding: '1.5rem',
-    border: '1px solid #e9ecef',
-    cursor: 'pointer',
-    transition: 'box-shadow 0.2s',
-  },
-  appHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '0.75rem',
-  },
-  appCategory: { fontSize: '0.9375rem', fontWeight: 600 },
-  appStatus: {
-    padding: '0.25rem 0.75rem',
-    borderRadius: 999,
-    fontSize: '0.75rem',
-    fontWeight: 600,
-    textTransform: 'uppercase',
-  },
-  appMeta: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    fontSize: '0.8125rem',
-    color: '#6c757d',
-  },
-  appScore: {
-    marginTop: '0.75rem',
-    fontSize: '0.8125rem',
-    fontWeight: 600,
-    color: '#1a5632',
-  },
-  profileGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-    gap: '1rem',
-  },
-  profileItem: {
-    background: '#fff',
-    borderRadius: 8,
-    padding: '1rem',
-    border: '1px solid #e9ecef',
-  },
-  profileLabel: {
-    display: 'block',
-    fontSize: '0.75rem',
-    fontWeight: 600,
-    color: '#6c757d',
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px',
-    marginBottom: '0.25rem',
-  },
-  profileValue: {
-    fontSize: '0.9375rem',
-    fontWeight: 600,
-    color: '#212529',
-  },
+const s = {
+  page: { paddingTop: 88, paddingBottom: 48, minHeight: '100vh' },
+  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16, marginBottom: 24 },
+  greeting: { fontSize: 28, fontWeight: 800, color: '#fafafa', letterSpacing: '-0.02em' },
+  subGreeting: { fontSize: 14, color: '#52525b', marginTop: 4 },
+  progressBadge: { display: 'flex', alignItems: 'center', gap: 8, background: '#1a1a1d', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '10px 16px' },
+  progressNum: { fontSize: 22, fontWeight: 800, color: '#d4a843' },
+  progressLabel: { fontSize: 13, color: '#a1a1aa' },
+  progressBar: { height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 999, marginBottom: 32, overflow: 'hidden' },
+  progressFill: { height: '100%', background: 'linear-gradient(90deg, #d4a843, #e0b94f)', borderRadius: 999, transition: 'width 0.6s ease' },
+  stepsGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, marginBottom: 40 },
+  stepCard: { background: '#1a1a1d', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '20px 18px', display: 'flex', flexDirection: 'column', gap: 10, transition: 'all 0.2s', minHeight: 180 },
+  stepDone: { borderColor: 'rgba(34,197,94,0.2)' },
+  stepCurrent: { borderColor: 'rgba(212,168,67,0.3)', boxShadow: '0 0 30px rgba(212,168,67,0.08)' },
+  stepTop: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+  stepNum: { width: 32, height: 32, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700 },
+  currentBadge: { fontSize: 10, fontWeight: 700, color: '#d4a843', background: 'rgba(212,168,67,0.15)', padding: '2px 8px', borderRadius: 999, letterSpacing: '0.05em' },
+  stepTitle: { fontSize: 15, fontWeight: 700, color: '#fafafa' },
+  stepDesc: { fontSize: 12, color: '#a1a1aa', lineHeight: 1.5 },
+  section: { marginBottom: 36 },
+  sectionHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  sectionTitle: { fontSize: 18, fontWeight: 700, color: '#fafafa' },
+  seeAll: { fontSize: 13, fontWeight: 600, color: '#d4a843', textDecoration: 'none' },
+  appList: { display: 'flex', flexDirection: 'column', gap: 8 },
+  appCard: { background: '#1a1a1d', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', transition: 'all 0.2s' },
+  appInfo: { display: 'flex', flexDirection: 'column' },
+  appType: { fontSize: 14, fontWeight: 600, color: '#fafafa', textTransform: 'capitalize' },
+  appDate: { fontSize: 12, color: '#52525b', marginTop: 2 },
+  appStatus: { padding: '4px 12px', borderRadius: 999, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.03em' },
+  quickGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 },
+  quickCard: { background: '#1a1a1d', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '20px 18px', display: 'flex', flexDirection: 'column', gap: 6, textDecoration: 'none', transition: 'all 0.2s' },
+  quickIcon: { fontSize: 20 },
+  quickLabel: { fontSize: 14, fontWeight: 600, color: '#fafafa' },
+  quickDesc: { fontSize: 12, color: '#52525b' },
 };

@@ -3,103 +3,83 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const navigate = useNavigate();
+  const { login } = useAuth();
+  const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
-  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
     try {
-      await login(email, password);
+      await login(form.email, form.password);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.error || 'Login failed. Please try again.');
+      setError(err.response?.data?.error || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={styles.page}>
-      <div style={styles.card}>
-        <div style={styles.header}>
-          <h1 style={styles.title}>Welcome Back</h1>
-          <p style={styles.subtitle}>Sign in to your Senzwa account</p>
+    <div style={s.page}>
+      <div style={s.container}>
+        <div style={s.card}>
+          <div style={s.header}>
+            <div style={s.logoMark}>S</div>
+            <h1 style={s.title}>Welcome back</h1>
+            <p style={s.subtitle}>Sign in to continue your migration journey</p>
+          </div>
+
+          {error && <div style={s.error}>{error}</div>}
+
+          <form onSubmit={handleSubmit}>
+            <div className="input-group">
+              <label>Email</label>
+              <input
+                type="email"
+                placeholder="you@example.com"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                required
+              />
+            </div>
+            <div className="input-group">
+              <label>Password</label>
+              <input
+                type="password"
+                placeholder="Enter your password"
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                required
+              />
+            </div>
+            <button type="submit" className="btn btn-primary btn-lg" style={{ width: '100%' }} disabled={loading}>
+              {loading ? 'Signing in...' : 'Sign In'}
+            </button>
+          </form>
+
+          <p style={s.footer}>
+            Don't have an account?{' '}
+            <Link to="/register" style={s.link}>Create one</Link>
+          </p>
         </div>
-
-        {error && <div style={styles.error}>{error}</div>}
-
-        <form onSubmit={handleSubmit}>
-          <div className="input-group">
-            <label>Email Address</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="your@email.com"
-              required
-            />
-          </div>
-
-          <div className="input-group">
-            <label>Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
-              required
-            />
-          </div>
-
-          <button type="submit" className="btn btn-primary btn-lg" style={styles.submitBtn} disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign In'}
-          </button>
-        </form>
-
-        <p style={styles.footer}>
-          Don't have an account?{' '}
-          <Link to="/register" style={styles.link}>Create one here</Link>
-        </p>
       </div>
     </div>
   );
 }
 
-const styles = {
-  page: {
-    minHeight: 'calc(100vh - 64px)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '2rem',
-    background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
-  },
-  card: {
-    background: '#fff',
-    borderRadius: 16,
-    padding: '2.5rem',
-    width: '100%',
-    maxWidth: 440,
-    boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
-  },
-  header: { textAlign: 'center', marginBottom: '2rem' },
-  title: { fontSize: '1.75rem', fontWeight: 800, color: '#1a5632', marginBottom: '0.5rem' },
-  subtitle: { color: '#6c757d', fontSize: '0.9375rem' },
-  error: {
-    background: '#f8d7da',
-    color: '#721c24',
-    padding: '0.75rem 1rem',
-    borderRadius: 8,
-    marginBottom: '1.5rem',
-    fontSize: '0.875rem',
-  },
-  submitBtn: { width: '100%', marginTop: '0.5rem' },
-  footer: { textAlign: 'center', marginTop: '1.5rem', fontSize: '0.875rem', color: '#6c757d' },
-  link: { color: '#1a5632', fontWeight: 600 },
+const s = {
+  page: { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#09090b', padding: '64px 24px 24px' },
+  container: { width: '100%', maxWidth: 420 },
+  card: { background: '#1a1a1d', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 20, padding: '40px 32px' },
+  header: { textAlign: 'center', marginBottom: 32 },
+  logoMark: { width: 48, height: 48, background: 'linear-gradient(135deg, #d4a843 0%, #b8922e 100%)', borderRadius: 14, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#09090b', fontWeight: 900, fontSize: 22, marginBottom: 20 },
+  title: { fontSize: 24, fontWeight: 800, color: '#fafafa', letterSpacing: '-0.02em', marginBottom: 6 },
+  subtitle: { fontSize: 14, color: '#a1a1aa' },
+  error: { background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444', padding: '10px 14px', borderRadius: 10, fontSize: 13, marginBottom: 20 },
+  footer: { textAlign: 'center', marginTop: 24, fontSize: 14, color: '#52525b' },
+  link: { color: '#d4a843', fontWeight: 600, textDecoration: 'none' },
 };

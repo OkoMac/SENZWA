@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -6,80 +6,134 @@ export default function Navbar() {
   const { user, logout } = useAuth();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [location.pathname]);
 
   const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/');
 
+  const navLinks = [
+    { path: '/knowledge', label: 'Knowledge Hub', public: true },
+    { path: '/dashboard', label: 'Dashboard', public: false },
+    { path: '/visas', label: 'Visas', public: false },
+    { path: '/eligibility', label: 'Eligibility', public: false },
+    { path: '/tracker', label: 'Tracker', public: false },
+  ];
+
+  const visibleLinks = navLinks.filter(link => link.public || user);
+
   return (
-    <nav style={styles.nav}>
+    <nav style={{
+      ...styles.nav,
+      background: scrolled ? 'rgba(9, 9, 11, 0.92)' : 'rgba(9, 9, 11, 0.6)',
+      backdropFilter: 'blur(20px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+      borderBottom: scrolled ? '1px solid rgba(255,255,255,0.06)' : '1px solid transparent',
+    }}>
       <div style={styles.container}>
+        {/* Logo */}
         <Link to="/" style={styles.logo}>
-          <span style={styles.logoIcon}>S</span>
-          <span style={styles.logoText}>SENZWA</span>
-          <span style={styles.logoSub}>MigrateSA</span>
+          <div style={styles.logoMark}>
+            <span style={styles.logoLetter}>S</span>
+          </div>
+          <div style={styles.logoTextWrap}>
+            <span style={styles.logoText}>SENZWA</span>
+            <span style={styles.logoSub}>MigrateSA</span>
+          </div>
         </Link>
 
-        <div style={styles.desktopMenu}>
-          {/* Knowledge Hub is ALWAYS visible - even without login */}
-          <Link to="/knowledge" style={{...styles.navLink, ...styles.knowledgeLink, ...(isActive('/knowledge') ? styles.navLinkActive : {})}}>
-            Knowledge Hub
-          </Link>
-
-          {user && (
-            <>
-              <Link to="/dashboard" style={{...styles.navLink, ...(isActive('/dashboard') ? styles.navLinkActive : {})}}>
-                Dashboard
-              </Link>
-              <Link to="/visas" style={{...styles.navLink, ...(isActive('/visas') ? styles.navLinkActive : {})}}>
-                Visa Categories
-              </Link>
-              <Link to="/eligibility" style={{...styles.navLink, ...(isActive('/eligibility') ? styles.navLinkActive : {})}}>
-                Eligibility Check
-              </Link>
-              <Link to="/tracker" style={{...styles.navLink, ...(isActive('/tracker') ? styles.navLinkActive : {})}}>
-                Track Application
-              </Link>
-            </>
-          )}
+        {/* Desktop Nav */}
+        <div style={styles.center}>
+          {visibleLinks.map(link => (
+            <Link
+              key={link.path}
+              to={link.path}
+              style={{
+                ...styles.navLink,
+                ...(isActive(link.path) ? styles.navLinkActive : {}),
+              }}
+            >
+              {link.label}
+            </Link>
+          ))}
         </div>
 
+        {/* Right Side */}
         <div style={styles.right}>
           {user ? (
-            <div style={styles.userMenu}>
-              <span style={styles.userName}>{user.firstName} {user.lastName}</span>
-              <button onClick={logout} style={styles.logoutBtn}>Logout</button>
+            <div style={styles.userArea}>
+              <div style={styles.avatar}>
+                {user.firstName?.[0]}{user.lastName?.[0]}
+              </div>
+              <button onClick={logout} style={styles.logoutBtn}>
+                Sign Out
+              </button>
             </div>
           ) : (
-            <div style={styles.authLinks}>
-              <Link to="/login" style={styles.loginLink}>Log In</Link>
-              <Link to="/register" className="btn btn-primary" style={styles.registerBtn}>Get Started</Link>
+            <div style={styles.authArea}>
+              <Link to="/login" style={styles.signInLink}>Sign In</Link>
+              <Link to="/register" className="btn btn-primary btn-sm">
+                Get Started
+              </Link>
             </div>
           )}
+
+          {/* Mobile Toggle */}
           <button
-            style={styles.hamburger}
+            style={styles.menuToggle}
             onClick={() => setMenuOpen(!menuOpen)}
             aria-label="Menu"
           >
-            {menuOpen ? '\u2715' : '\u2630'}
+            <div style={{
+              ...styles.hamburgerLine,
+              transform: menuOpen ? 'rotate(45deg) translateY(6px)' : 'none',
+            }} />
+            <div style={{
+              ...styles.hamburgerLine,
+              opacity: menuOpen ? 0 : 1,
+            }} />
+            <div style={{
+              ...styles.hamburgerLine,
+              transform: menuOpen ? 'rotate(-45deg) translateY(-6px)' : 'none',
+            }} />
           </button>
         </div>
       </div>
 
+      {/* Mobile Menu */}
       {menuOpen && (
         <div style={styles.mobileMenu}>
-          <Link to="/knowledge" style={styles.mobileLink} onClick={() => setMenuOpen(false)}>Knowledge Hub</Link>
-          {user && (
+          {visibleLinks.map(link => (
+            <Link
+              key={link.path}
+              to={link.path}
+              style={{
+                ...styles.mobileLink,
+                ...(isActive(link.path) ? styles.mobileLinkActive : {}),
+              }}
+            >
+              {link.label}
+            </Link>
+          ))}
+          <div style={styles.mobileDivider} />
+          {user ? (
+            <button onClick={logout} style={styles.mobileLogout}>
+              Sign Out
+            </button>
+          ) : (
             <>
-              <Link to="/dashboard" style={styles.mobileLink} onClick={() => setMenuOpen(false)}>Dashboard</Link>
-              <Link to="/visas" style={styles.mobileLink} onClick={() => setMenuOpen(false)}>Visa Categories</Link>
-              <Link to="/eligibility" style={styles.mobileLink} onClick={() => setMenuOpen(false)}>Eligibility Check</Link>
-              <Link to="/tracker" style={styles.mobileLink} onClick={() => setMenuOpen(false)}>Track Application</Link>
-              <button onClick={() => { logout(); setMenuOpen(false); }} style={styles.mobileLogout}>Logout</button>
-            </>
-          )}
-          {!user && (
-            <>
-              <Link to="/login" style={styles.mobileLink} onClick={() => setMenuOpen(false)}>Log In</Link>
-              <Link to="/register" style={styles.mobileLink} onClick={() => setMenuOpen(false)}>Get Started</Link>
+              <Link to="/login" style={styles.mobileLink}>Sign In</Link>
+              <Link to="/register" style={{...styles.mobileLink, color: '#d4a843', fontWeight: 600}}>
+                Get Started
+              </Link>
             </>
           )}
         </div>
@@ -90,17 +144,17 @@ export default function Navbar() {
 
 const styles = {
   nav: {
-    background: '#fff',
-    borderBottom: '1px solid #e9ecef',
-    position: 'sticky',
+    position: 'fixed',
     top: 0,
-    zIndex: 100,
-    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+    left: 0,
+    right: 0,
+    zIndex: 1000,
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
   },
   container: {
     maxWidth: 1200,
     margin: '0 auto',
-    padding: '0 1.5rem',
+    padding: '0 24px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -109,125 +163,181 @@ const styles = {
   logo: {
     display: 'flex',
     alignItems: 'center',
-    gap: '0.5rem',
+    gap: 10,
     textDecoration: 'none',
+    flexShrink: 0,
   },
-  logoIcon: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
+  logoMark: {
     width: 36,
     height: 36,
-    background: '#1a5632',
-    color: '#fff',
-    borderRadius: 8,
-    fontWeight: 800,
-    fontSize: '1.125rem',
+    background: 'linear-gradient(135deg, #d4a843 0%, #b8922e 100%)',
+    borderRadius: 10,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoLetter: {
+    color: '#09090b',
+    fontWeight: 900,
+    fontSize: 18,
+    letterSpacing: '-0.02em',
+  },
+  logoTextWrap: {
+    display: 'flex',
+    flexDirection: 'column',
+    lineHeight: 1,
   },
   logoText: {
     fontWeight: 800,
-    fontSize: '1.25rem',
-    color: '#1a5632',
-    letterSpacing: '1px',
+    fontSize: 17,
+    color: '#fafafa',
+    letterSpacing: '0.08em',
   },
   logoSub: {
-    fontSize: '0.75rem',
-    color: '#6c757d',
+    fontSize: 10,
+    color: '#a1a1aa',
     fontWeight: 500,
-    marginLeft: '-0.25rem',
+    letterSpacing: '0.06em',
+    marginTop: 1,
   },
-  desktopMenu: {
+  center: {
     display: 'flex',
-    gap: '0.25rem',
+    gap: 2,
+    alignItems: 'center',
   },
   navLink: {
-    padding: '0.5rem 1rem',
-    borderRadius: 6,
-    fontSize: '0.875rem',
+    padding: '7px 14px',
+    borderRadius: 8,
+    fontSize: 13,
     fontWeight: 500,
-    color: '#495057',
+    color: '#a1a1aa',
     textDecoration: 'none',
-    transition: 'all 0.2s',
-  },
-  knowledgeLink: {
-    fontWeight: 600,
-    color: '#1a5632',
+    transition: 'all 0.2s ease',
+    letterSpacing: '0.01em',
   },
   navLinkActive: {
-    background: '#e8f5e9',
-    color: '#1a5632',
-    fontWeight: 600,
+    color: '#fafafa',
+    background: 'rgba(255, 255, 255, 0.08)',
   },
   right: {
     display: 'flex',
     alignItems: 'center',
-    gap: '1rem',
+    gap: 12,
+    flexShrink: 0,
   },
-  userMenu: {
+  userArea: {
     display: 'flex',
     alignItems: 'center',
-    gap: '1rem',
+    gap: 12,
   },
-  userName: {
-    fontSize: '0.875rem',
-    fontWeight: 500,
-    color: '#495057',
+  avatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    background: 'linear-gradient(135deg, #d4a843 0%, #b8922e 100%)',
+    color: '#09090b',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: 12,
+    fontWeight: 700,
+    letterSpacing: '0.02em',
   },
   logoutBtn: {
-    padding: '0.375rem 0.75rem',
-    border: '1px solid #dee2e6',
-    background: '#fff',
-    borderRadius: 6,
-    fontSize: '0.8125rem',
-    color: '#495057',
+    padding: '6px 14px',
+    background: 'transparent',
+    border: '1px solid rgba(255,255,255,0.1)',
+    borderRadius: 8,
+    color: '#a1a1aa',
+    fontSize: 13,
+    fontWeight: 500,
     cursor: 'pointer',
+    fontFamily: 'inherit',
+    transition: 'all 0.2s ease',
   },
-  authLinks: {
+  authArea: {
     display: 'flex',
     alignItems: 'center',
-    gap: '1rem',
+    gap: 16,
   },
-  loginLink: {
-    fontSize: '0.875rem',
+  signInLink: {
+    fontSize: 13,
     fontWeight: 500,
-    color: '#495057',
+    color: '#a1a1aa',
     textDecoration: 'none',
+    transition: 'color 0.2s',
   },
-  registerBtn: {
-    padding: '0.5rem 1.25rem',
-    fontSize: '0.875rem',
-    borderRadius: 8,
-  },
-  hamburger: {
+  menuToggle: {
     display: 'none',
+    flexDirection: 'column',
+    gap: 4,
+    padding: 8,
     background: 'none',
     border: 'none',
-    fontSize: '1.5rem',
-    color: '#495057',
     cursor: 'pointer',
   },
+  hamburgerLine: {
+    width: 20,
+    height: 2,
+    background: '#a1a1aa',
+    borderRadius: 2,
+    transition: 'all 0.3s ease',
+  },
   mobileMenu: {
-    padding: '1rem 1.5rem',
-    background: '#fff',
-    borderTop: '1px solid #e9ecef',
+    padding: '12px 24px 24px',
     display: 'flex',
     flexDirection: 'column',
-    gap: '0.5rem',
+    gap: 2,
+    background: 'rgba(9, 9, 11, 0.98)',
+    borderBottom: '1px solid rgba(255,255,255,0.06)',
+    animation: 'fadeInDown 0.2s ease',
   },
   mobileLink: {
-    padding: '0.75rem',
-    fontSize: '0.9375rem',
-    color: '#495057',
+    padding: '12px 16px',
+    fontSize: 15,
+    fontWeight: 500,
+    color: '#a1a1aa',
     textDecoration: 'none',
-    borderRadius: 6,
+    borderRadius: 10,
+    transition: 'all 0.2s',
+  },
+  mobileLinkActive: {
+    color: '#fafafa',
+    background: 'rgba(255, 255, 255, 0.06)',
+  },
+  mobileDivider: {
+    height: 1,
+    background: 'rgba(255,255,255,0.06)',
+    margin: '8px 0',
   },
   mobileLogout: {
-    padding: '0.75rem',
-    fontSize: '0.9375rem',
-    color: '#dc3545',
+    padding: '12px 16px',
+    fontSize: 15,
+    fontWeight: 500,
+    color: '#ef4444',
     background: 'none',
     border: 'none',
     textAlign: 'left',
     cursor: 'pointer',
+    borderRadius: 10,
+    fontFamily: 'inherit',
   },
 };
+
+// Media query handled via CSS - add this to index.css or use window.matchMedia
+// For the hamburger to show on mobile, we need CSS media queries
+// Since we're using inline styles, we'll detect via JS
+if (typeof window !== 'undefined') {
+  const style = document.createElement('style');
+  style.textContent = `
+    @media (max-width: 768px) {
+      nav [data-desktop-menu] { display: none !important; }
+      nav [data-mobile-toggle] { display: flex !important; }
+      nav [data-auth-desktop] { display: none !important; }
+    }
+  `;
+  if (!document.getElementById('senzwa-nav-styles')) {
+    style.id = 'senzwa-nav-styles';
+    document.head.appendChild(style);
+  }
+}
