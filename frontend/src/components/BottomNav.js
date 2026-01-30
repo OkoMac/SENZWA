@@ -2,17 +2,25 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
+// Hide bottom nav on secondary screens (onboarding, application builder, document upload, visa detail)
+const HIDDEN_PATTERNS = ['/onboarding', '/applications/', '/visas/'];
+
 export default function BottomNav() {
   const { user } = useAuth();
   const location = useLocation();
   const path = location.pathname;
 
+  // Hide on secondary screens per spec
+  if (HIDDEN_PATTERNS.some(p => path.startsWith(p) && path !== '/visas')) return null;
+  // Also hide on login/register
+  if (['/login', '/register'].includes(path)) return null;
+
   const tabs = [
     { to: user ? '/dashboard' : '/', label: 'Home', icon: HomeIcon, match: ['/', '/dashboard'] },
+    { to: '/tracker', label: 'Applications', icon: FolderIcon, match: ['/tracker'] },
     { to: '/knowledge', label: 'Knowledge', icon: BookIcon, match: ['/knowledge'] },
-    { to: '/visas', label: 'Explore', icon: CompassIcon, match: ['/visas'] },
-    { to: '/eligibility', label: 'Eligibility', icon: CheckIcon, match: ['/eligibility'] },
-    { to: '/tracker', label: 'Track', icon: ClipboardIcon, match: ['/tracker'] },
+    { to: '/messages', label: 'Messages', icon: ChatIcon, match: ['/messages'] },
+    { to: user ? '/profile' : '/login', label: 'Profile', icon: UserIcon, match: ['/profile'] },
   ];
 
   const isActive = (match) => match.some(m => path === m || (m !== '/' && path.startsWith(m)));
@@ -20,28 +28,36 @@ export default function BottomNav() {
   return (
     <div style={{
       position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 900,
-      background: 'rgba(9,9,11,0.85)',
-      backdropFilter: 'blur(24px) saturate(200%)',
-      WebkitBackdropFilter: 'blur(24px) saturate(200%)',
+      background: 'rgba(9,9,11,0.88)',
+      backdropFilter: 'blur(28px) saturate(200%)',
+      WebkitBackdropFilter: 'blur(28px) saturate(200%)',
       borderTop: '1px solid rgba(255,255,255,0.06)',
       paddingBottom: 'env(safe-area-inset-bottom, 0px)',
     }}>
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-around',
-        maxWidth: 500, margin: '0 auto', height: 60,
+        maxWidth: 500, margin: '0 auto', height: 62,
       }}>
         {tabs.map(tab => {
           const active = isActive(tab.match);
-          const needsAuth = ['/dashboard', '/visas', '/eligibility', '/tracker'].includes(tab.to);
-          if (needsAuth && !user && tab.to !== '/') return null;
-
           return (
-            <Link key={tab.to} to={tab.to} style={{
+            <Link key={tab.label} to={tab.to} style={{
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
               textDecoration: 'none', padding: '6px 12px',
               transition: 'all 0.2s ease',
+              minWidth: 56,
             }}>
-              <tab.icon color={active ? '#d4a843' : '#52525b'} size={22} />
+              <div style={{
+                position: 'relative',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                {active && <div style={{
+                  position: 'absolute', inset: -6,
+                  background: 'rgba(212,168,67,0.1)',
+                  borderRadius: 12,
+                }} />}
+                <tab.icon color={active ? '#d4a843' : '#52525b'} size={22} />
+              </div>
               <span style={{
                 fontSize: 10, fontWeight: active ? 700 : 500,
                 color: active ? '#d4a843' : '#52525b',
@@ -49,10 +65,6 @@ export default function BottomNav() {
               }}>
                 {tab.label}
               </span>
-              {active && <div style={{
-                width: 4, height: 4, borderRadius: '50%',
-                background: '#d4a843', marginTop: -1,
-              }} />}
             </Link>
           );
         })}
@@ -70,6 +82,14 @@ function HomeIcon({ color, size }) {
   );
 }
 
+function FolderIcon({ color, size }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" />
+    </svg>
+  );
+}
+
 function BookIcon({ color, size }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -79,29 +99,19 @@ function BookIcon({ color, size }) {
   );
 }
 
-function CompassIcon({ color, size }) {
+function ChatIcon({ color, size }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10" />
-      <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+      <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
     </svg>
   );
 }
 
-function CheckIcon({ color, size }) {
+function UserIcon({ color, size }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
-      <polyline points="22 4 12 14.01 9 11.01" />
-    </svg>
-  );
-}
-
-function ClipboardIcon({ color, size }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2" />
-      <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+      <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
     </svg>
   );
 }

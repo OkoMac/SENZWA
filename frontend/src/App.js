@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import BottomNav from './components/BottomNav';
+import AskSenzwa from './components/AskSenzwa';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -15,6 +16,8 @@ import ApplicationView from './pages/ApplicationView';
 import DocumentUpload from './pages/DocumentUpload';
 import KnowledgeHub from './pages/KnowledgeHub';
 import ApplicationTracker from './pages/ApplicationTracker';
+import Messages from './pages/Messages';
+import Profile from './pages/Profile';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -49,9 +52,12 @@ function AppContent() {
             <Route path="/applications/:id/documents" element={<ProtectedRoute><DocumentUpload /></ProtectedRoute>} />
             <Route path="/knowledge" element={<KnowledgeHub />} />
             <Route path="/tracker" element={<ProtectedRoute><ApplicationTracker /></ProtectedRoute>} />
+            <Route path="/messages" element={<Messages />} />
+            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </main>
+        <AskSenzwa />
         <BottomNav />
       </div>
     </Router>
