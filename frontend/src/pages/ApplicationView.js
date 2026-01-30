@@ -127,7 +127,7 @@ const s = {
   title: { fontSize: 28, fontWeight: 800, color: '#fafafa' },
   appId: { fontSize: 12, color: '#52525b', fontFamily: 'monospace' },
   badge: { padding: '6px 16px', borderRadius: 999, fontWeight: 700, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em' },
-  card: { background: '#1a1a1d', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: 24, marginBottom: 14 },
+  card: { background: 'rgba(26,26,29,0.6)', backdropFilter: 'blur(20px) saturate(180%)', WebkitBackdropFilter: 'blur(20px) saturate(180%)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: 24, marginBottom: 14 },
   cardTitle: { fontSize: 15, fontWeight: 700, color: '#fafafa', marginBottom: 16 },
   grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10 },
   gridItem: { background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '12px 14px' },

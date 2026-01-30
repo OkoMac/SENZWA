@@ -85,7 +85,7 @@ export default function Register() {
 const s = {
   page: { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#09090b', padding: '80px 24px 24px' },
   container: { width: '100%', maxWidth: 480 },
-  card: { background: '#1a1a1d', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 20, padding: '40px 32px' },
+  card: { background: 'rgba(26,26,29,0.6)', backdropFilter: 'blur(24px) saturate(180%)', WebkitBackdropFilter: 'blur(24px) saturate(180%)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 20, padding: '40px 32px' },
   header: { textAlign: 'center', marginBottom: 32 },
   logoMark: { width: 48, height: 48, background: 'linear-gradient(135deg, #d4a843 0%, #b8922e 100%)', borderRadius: 14, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#09090b', fontWeight: 900, fontSize: 22, marginBottom: 20 },
   title: { fontSize: 24, fontWeight: 800, color: '#fafafa', letterSpacing: '-0.02em', marginBottom: 6 },

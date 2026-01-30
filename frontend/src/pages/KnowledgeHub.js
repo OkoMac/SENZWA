@@ -577,22 +577,22 @@ const s = {
   subtitle: { fontSize: 15, color: '#a1a1aa', lineHeight: 1.6, marginBottom: 28, maxWidth: 600 },
   tabs: { display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 32, padding: '4px', background: '#111113', borderRadius: 12 },
   tabBtn: { padding: '8px 14px', background: 'transparent', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, color: '#a1a1aa', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s', whiteSpace: 'nowrap' },
-  tabActive: { background: '#1a1a1d', color: '#d4a843' },
-  searchInput: { width: '100%', padding: '14px 18px', background: '#1a1a1d', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, fontSize: 15, color: '#fafafa', fontFamily: 'inherit', outline: 'none', marginBottom: 20 },
+  tabActive: { background: 'rgba(26,26,29,0.7)', color: '#d4a843' },
+  searchInput: { width: '100%', padding: '14px 18px', background: 'rgba(26,26,29,0.6)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, fontSize: 15, color: '#fafafa', fontFamily: 'inherit', outline: 'none', marginBottom: 20 },
   muted: { color: '#52525b', fontSize: 14, textAlign: 'center', padding: 40 },
 
   // Overview
   statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, marginBottom: 28 },
-  statCard: { background: '#1a1a1d', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '24px 20px', textAlign: 'center' },
+  statCard: { background: 'rgba(26,26,29,0.6)', backdropFilter: 'blur(16px) saturate(180%)', WebkitBackdropFilter: 'blur(16px) saturate(180%)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: '24px 20px', textAlign: 'center' },
   statNum: { display: 'block', fontSize: 28, fontWeight: 800, color: '#d4a843', letterSpacing: '-0.02em' },
   statLabel: { display: 'block', fontSize: 12, color: '#52525b', marginTop: 4, textTransform: 'uppercase', letterSpacing: '0.05em' },
   quickLinks: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 10 },
-  quickBtn: { background: '#1a1a1d', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '16px 18px', fontSize: 14, fontWeight: 600, color: '#fafafa', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left', display: 'flex', justifyContent: 'space-between', alignItems: 'center', transition: 'all 0.2s' },
+  quickBtn: { background: 'rgba(26,26,29,0.6)', backdropFilter: 'blur(16px) saturate(180%)', WebkitBackdropFilter: 'blur(16px) saturate(180%)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '16px 18px', fontSize: 14, fontWeight: 600, color: '#fafafa', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left', display: 'flex', justifyContent: 'space-between', alignItems: 'center', transition: 'all 0.2s' },
   quickArrow: { color: '#d4a843', fontSize: 16 },
 
   // Visas
   visaGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 },
-  visaCard: { background: '#1a1a1d', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '20px 18px', textDecoration: 'none', display: 'flex', flexDirection: 'column', gap: 8, transition: 'all 0.2s' },
+  visaCard: { background: 'rgba(26,26,29,0.6)', backdropFilter: 'blur(16px) saturate(180%)', WebkitBackdropFilter: 'blur(16px) saturate(180%)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: '20px 18px', textDecoration: 'none', display: 'flex', flexDirection: 'column', gap: 8, transition: 'all 0.2s' },
   visaName: { fontSize: 15, fontWeight: 700, color: '#fafafa' },
   visaDesc: { fontSize: 13, color: '#a1a1aa', lineHeight: 1.5, flex: 1 },
   visaMeta: { display: 'flex', justifyContent: 'space-between', paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.04)' },
@@ -604,7 +604,7 @@ const s = {
   skillCat: { fontSize: 16, fontWeight: 700, color: '#d4a843', marginBottom: 12 },
   skillCount: { fontSize: 13, color: '#52525b', fontWeight: 400 },
   skillList: { display: 'flex', flexDirection: 'column', gap: 6 },
-  skillRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#1a1a1d', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: '12px 16px', flexWrap: 'wrap', gap: 8 },
+  skillRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(26,26,29,0.6)', backdropFilter: 'blur(16px) saturate(180%)', WebkitBackdropFilter: 'blur(16px) saturate(180%)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: '12px 16px', flexWrap: 'wrap', gap: 8 },
   skillInfo: { display: 'flex', flexDirection: 'column' },
   skillTitle: { fontSize: 14, fontWeight: 600, color: '#fafafa' },
   skillOfo: { fontSize: 11, color: '#52525b' },
@@ -614,7 +614,7 @@ const s = {
 
   // Country
   countrySearch: { display: 'flex', gap: 12, marginBottom: 24 },
-  countryResults: { background: '#1a1a1d', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: 24 },
+  countryResults: { background: 'rgba(26,26,29,0.6)', backdropFilter: 'blur(16px) saturate(180%)', WebkitBackdropFilter: 'blur(16px) saturate(180%)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: 24 },
   countryName: { fontSize: 22, fontWeight: 700, color: '#fafafa', marginBottom: 16 },
   countryGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginBottom: 16 },
   countryItem: { background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '14px 16px' },
@@ -626,7 +626,7 @@ const s = {
 
   // Documents
   docsGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 },
-  docCard: { background: '#1a1a1d', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '22px 20px' },
+  docCard: { background: 'rgba(26,26,29,0.6)', backdropFilter: 'blur(16px) saturate(180%)', WebkitBackdropFilter: 'blur(16px) saturate(180%)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: '22px 20px' },
   docTitle: { fontSize: 15, fontWeight: 700, color: '#fafafa', marginBottom: 8 },
   docDesc: { fontSize: 13, color: '#a1a1aa', lineHeight: 1.6, marginBottom: 12 },
   docTip: { fontSize: 12, color: '#d4a843', background: 'rgba(212,168,67,0.06)', padding: '8px 12px', borderRadius: 8, lineHeight: 1.5 },
@@ -636,13 +636,13 @@ const s = {
   feeSection: { marginBottom: 24 },
   feeCat: { fontSize: 16, fontWeight: 700, color: '#fafafa', marginBottom: 10, textTransform: 'capitalize' },
   feeList: { display: 'flex', flexDirection: 'column', gap: 4 },
-  feeRow: { display: 'flex', justifyContent: 'space-between', padding: '10px 16px', background: '#1a1a1d', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8 },
+  feeRow: { display: 'flex', justifyContent: 'space-between', padding: '10px 16px', background: 'rgba(26,26,29,0.6)', backdropFilter: 'blur(16px) saturate(180%)', WebkitBackdropFilter: 'blur(16px) saturate(180%)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8 },
   feeName: { fontSize: 13, color: '#a1a1aa', textTransform: 'capitalize' },
   feeAmount: { fontSize: 14, fontWeight: 700, color: '#d4a843' },
 
   // Times
   timesList: { display: 'flex', flexDirection: 'column', gap: 6 },
-  timeRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 18px', background: '#1a1a1d', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10 },
+  timeRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 18px', background: 'rgba(26,26,29,0.6)', backdropFilter: 'blur(16px) saturate(180%)', WebkitBackdropFilter: 'blur(16px) saturate(180%)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10 },
   timeCat: { fontSize: 14, fontWeight: 600, color: '#fafafa', textTransform: 'capitalize', flex: 1 },
   timeValues: { display: 'flex', gap: 12, alignItems: 'center' },
   timeStd: { fontSize: 13, color: '#a1a1aa' },
@@ -652,7 +652,7 @@ const s = {
   officeSection: { marginBottom: 28 },
   officeSectionTitle: { fontSize: 16, fontWeight: 700, color: '#fafafa', marginBottom: 12, textTransform: 'capitalize' },
   officeGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 12 },
-  officeCard: { background: '#1a1a1d', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '20px 18px' },
+  officeCard: { background: 'rgba(26,26,29,0.6)', backdropFilter: 'blur(16px) saturate(180%)', WebkitBackdropFilter: 'blur(16px) saturate(180%)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: '20px 18px' },
   officeName: { fontSize: 14, fontWeight: 700, color: '#fafafa', marginBottom: 6 },
   officeAddr: { fontSize: 13, color: '#a1a1aa', lineHeight: 1.5 },
   officeHours: { fontSize: 12, color: '#52525b', marginTop: 6 },
@@ -660,7 +660,7 @@ const s = {
 
   // Bodies
   bodiesGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 },
-  bodyCard: { background: '#1a1a1d', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '22px 20px' },
+  bodyCard: { background: 'rgba(26,26,29,0.6)', backdropFilter: 'blur(16px) saturate(180%)', WebkitBackdropFilter: 'blur(16px) saturate(180%)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: '22px 20px' },
   bodyName: { fontSize: 14, fontWeight: 700, color: '#fafafa', marginBottom: 2 },
   bodyAbbr: { fontSize: 13, fontWeight: 600, color: '#d4a843', marginBottom: 6 },
   bodyField: { fontSize: 13, color: '#a1a1aa', marginBottom: 8 },
@@ -670,7 +670,7 @@ const s = {
   // FAQ
   faqSection: { marginBottom: 28 },
   faqCat: { fontSize: 16, fontWeight: 700, color: '#d4a843', marginBottom: 12 },
-  faqItem: { background: '#1a1a1d', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, marginBottom: 6, cursor: 'pointer', overflow: 'hidden', transition: 'all 0.2s' },
+  faqItem: { background: 'rgba(26,26,29,0.6)', backdropFilter: 'blur(16px) saturate(180%)', WebkitBackdropFilter: 'blur(16px) saturate(180%)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, marginBottom: 6, cursor: 'pointer', overflow: 'hidden', transition: 'all 0.2s' },
   faqQuestion: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 18px' },
   faqQ: { fontSize: 14, fontWeight: 600, color: '#fafafa' },
   faqToggle: { fontSize: 18, color: '#d4a843', fontWeight: 300 },

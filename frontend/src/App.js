@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
+import BottomNav from './components/BottomNav';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -19,9 +20,8 @@ function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '80vh', background: '#09090b' }}>
         <div className="spinner" />
-        <p style={{ marginLeft: '1rem', color: '#6c757d' }}>Loading...</p>
       </div>
     );
   }
@@ -35,7 +35,7 @@ function AppContent() {
     <Router>
       <div className="app">
         <Navbar />
-        <main>
+        <main style={{ paddingBottom: 72 }}>
           <Routes>
             <Route path="/" element={user ? <Navigate to="/dashboard" /> : <Landing />} />
             <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login />} />
@@ -52,6 +52,7 @@ function AppContent() {
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </main>
+        <BottomNav />
       </div>
     </Router>
   );

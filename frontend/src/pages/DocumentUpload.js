@@ -150,7 +150,7 @@ const s = {
   back: { background: 'none', border: 'none', color: '#a1a1aa', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 24, padding: 0 },
   title: { fontSize: 28, fontWeight: 800, color: '#fafafa', marginBottom: 6 },
   subtitle: { fontSize: 14, color: '#a1a1aa', marginBottom: 28 },
-  card: { background: '#1a1a1d', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: 24, marginBottom: 16 },
+  card: { background: 'rgba(26,26,29,0.6)', backdropFilter: 'blur(20px) saturate(180%)', WebkitBackdropFilter: 'blur(20px) saturate(180%)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: 24, marginBottom: 16 },
   cardTitle: { fontSize: 15, fontWeight: 700, color: '#fafafa', marginBottom: 16 },
   compHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   compLabel: { fontWeight: 700, fontSize: 15, color: '#fafafa' },
