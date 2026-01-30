@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import Logo from '../components/Logo';
 
 export default function Register() {
   const navigate = useNavigate();
@@ -19,7 +20,7 @@ export default function Register() {
       await register({ firstName: form.firstName, lastName: form.lastName, email: form.email, phone: form.phone, password: form.password });
       navigate('/onboarding');
     } catch (err) {
-      setError(err.response?.data?.error || 'Registration failed. Please try again.');
+      setError(err.response?.data?.error || (err.code === 'ERR_NETWORK' ? 'Cannot connect to server. The backend API is not running.' : 'Registration failed. Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -32,7 +33,7 @@ export default function Register() {
       <div style={s.container}>
         <div style={s.card}>
           <div style={s.header}>
-            <div style={s.logoMark}>S</div>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}><Logo height={36} /></div>
             <h1 style={s.title}>Create your account</h1>
             <p style={s.subtitle}>Start your South African migration journey</p>
           </div>

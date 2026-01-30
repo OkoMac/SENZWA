@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import Logo from '../components/Logo';
 
 export default function Landing() {
   return (
@@ -8,6 +9,9 @@ export default function Landing() {
       <section style={styles.hero}>
         <div style={styles.heroGlow} />
         <div style={styles.heroContent}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 32 }}>
+            <Logo height={48} />
+          </div>
           <div style={styles.heroBadge}>
             AI-Powered Immigration Platform
           </div>
@@ -160,7 +164,7 @@ export default function Landing() {
         <div className="container">
           <div style={styles.footerTop}>
             <div>
-              <div style={styles.footerLogo}>SENZWA</div>
+              <div style={{ marginBottom: 8 }}><Logo height={28} /></div>
               <p style={styles.footerText}>The Intelligent Infrastructure for Migration into South Africa</p>
             </div>
             <div style={{ textAlign: 'right' }}>

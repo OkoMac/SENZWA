@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 60" fill="none">
+  <defs>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#d4a843"/>
+      <stop offset="50%" stop-color="#e8c566"/>
+      <stop offset="100%" stop-color="#b8922e"/>
+    </linearGradient>
+    <pattern id="tribal" patternUnits="userSpaceOnUse" width="8" height="8">
+      <path d="M0 4L4 0L8 4L4 8Z" fill="rgba(212,168,67,0.12)" stroke="rgba(212,168,67,0.08)" stroke-width="0.5"/>
+    </pattern>
+  </defs>
+  <!-- Geometric mark -->
+  <rect x="0" y="8" width="44" height="44" rx="12" fill="url(#goldGrad)"/>
+  <rect x="0" y="8" width="44" height="44" rx="12" fill="url(#tribal)"/>
+  <!-- Inner diamond -->
+  <path d="M22 16L34 30L22 44L10 30Z" fill="none" stroke="#09090b" stroke-width="1.5" opacity="0.3"/>
+  <path d="M22 20L30 30L22 40L14 30Z" fill="none" stroke="#09090b" stroke-width="1" opacity="0.2"/>
+  <!-- S lettermark -->
+  <text x="22" y="38" text-anchor="middle" font-family="Inter, sans-serif" font-weight="900" font-size="22" fill="#09090b" letter-spacing="-0.02em">S</text>
+  <!-- SENZWA wordmark -->
+  <text x="56" y="32" font-family="Inter, sans-serif" font-weight="800" font-size="28" fill="#fafafa" letter-spacing="0.1em">SENZWA</text>
+  <!-- Tagline -->
+  <text x="56" y="48" font-family="Inter, sans-serif" font-weight="500" font-size="10" fill="#a1a1aa" letter-spacing="0.15em">MIGRATE SA</text>
+  <!-- Decorative line -->
+  <line x1="56" y1="36" x2="120" y2="36" stroke="url(#goldGrad)" stroke-width="0.5" opacity="0.4"/>
+</svg>
