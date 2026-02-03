@@ -76,6 +76,13 @@ export default function Register() {
             Already have an account?{' '}
             <Link to="/login" style={s.link}>Sign in</Link>
           </p>
+
+          <div style={s.trustRow}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#52525b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+            <span style={s.trustText}>POPIA compliant. Your data is encrypted and secure.</span>
+          </div>
         </div>
       </div>
     </div>
@@ -94,4 +101,6 @@ const s = {
   row: { display: 'flex', gap: 12 },
   footer: { textAlign: 'center', marginTop: 24, fontSize: 14, color: '#52525b' },
   link: { color: '#d4a843', fontWeight: 600, textDecoration: 'none' },
+  trustRow: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 20, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.04)' },
+  trustText: { fontSize: 11, color: '#3f3f46', letterSpacing: '0.02em' },
 };
