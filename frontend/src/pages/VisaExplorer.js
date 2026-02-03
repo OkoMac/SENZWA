@@ -78,8 +78,30 @@ export default function VisaExplorer() {
 
         {/* Search */}
         <div style={s.searchWrap}>
-          <input type="text" placeholder="Search visa categories..." value={search} onChange={(e) => setSearch(e.target.value)} style={s.searchInput} />
+          <div style={s.searchBox}>
+            <svg style={s.searchIcon} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#52525b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input type="text" placeholder="Search visa categories..." value={search} onChange={(e) => setSearch(e.target.value)} style={s.searchInput} />
+          </div>
         </div>
+
+        {/* Group Summary Cards */}
+        {!search && activeGroup === 'all' && (
+          <div style={s.groupGrid}>
+            {groups.map(g => {
+              const count = categories.filter(c => c.category === g.id).length;
+              const color = groupColors[g.id] || '#52525b';
+              return (
+                <button key={g.id} onClick={() => setActiveGroup(g.id)} style={s.groupCard}>
+                  <div style={{ ...s.groupDot, background: color }} />
+                  <span style={s.groupName}>{g.name}</span>
+                  <span style={{ ...s.groupCount, color }}>{count}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Filter Tabs */}
         <div style={s.filters}>
@@ -135,7 +157,14 @@ const s = {
   title: { fontSize: 32, fontWeight: 800, color: '#fafafa', letterSpacing: '-0.02em', marginBottom: 8 },
   subtitle: { fontSize: 15, color: '#a1a1aa', lineHeight: 1.6, maxWidth: 600 },
   searchWrap: { marginBottom: 20 },
-  searchInput: { width: '100%', padding: '14px 18px', background: 'rgba(26,26,29,0.6)', backdropFilter: 'blur(16px) saturate(180%)', WebkitBackdropFilter: 'blur(16px) saturate(180%)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, fontSize: 15, color: '#fafafa', fontFamily: 'inherit', outline: 'none', transition: 'all 0.2s' },
+  searchBox: { position: 'relative' },
+  searchIcon: { position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' },
+  searchInput: { width: '100%', padding: '14px 18px 14px 44px', background: 'rgba(26,26,29,0.6)', backdropFilter: 'blur(16px) saturate(180%)', WebkitBackdropFilter: 'blur(16px) saturate(180%)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, fontSize: 15, color: '#fafafa', fontFamily: 'inherit', outline: 'none', transition: 'all 0.2s' },
+  groupGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 8, marginBottom: 16 },
+  groupCard: { display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', background: 'rgba(26,26,29,0.6)', backdropFilter: 'blur(16px) saturate(180%)', WebkitBackdropFilter: 'blur(16px) saturate(180%)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s', textAlign: 'left' },
+  groupDot: { width: 8, height: 8, borderRadius: '50%', flexShrink: 0 },
+  groupName: { fontSize: 13, fontWeight: 600, color: '#fafafa', flex: 1 },
+  groupCount: { fontSize: 14, fontWeight: 800 },
   filters: { display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 24 },
   filterBtn: { padding: '7px 14px', background: 'transparent', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 12, fontWeight: 600, color: '#a1a1aa', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s', whiteSpace: 'nowrap' },
   filterActive: { background: 'rgba(212,168,67,0.12)', color: '#d4a843', borderColor: 'rgba(212,168,67,0.3)' },

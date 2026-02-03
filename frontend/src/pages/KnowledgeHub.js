@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { knowledgeAPI } from '../services/api';
 
 const FALLBACK_DATA = {
@@ -267,6 +267,18 @@ const TABS = [
   { id: 'faq', label: 'FAQ' },
 ];
 
+const CATEGORIES = [
+  { id: 'visas', label: 'Visa Types', desc: 'All 22+ DHA visa categories', count: '22+', color: '#3b82f6', iconPath: 'M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z' },
+  { id: 'skills', label: 'Critical Skills', desc: 'In-demand skills on the official list', count: '80+', color: '#22c55e', iconPath: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z' },
+  { id: 'docs', label: 'Documents Guide', desc: 'Required documents for every visa type', count: '8', color: '#a855f7', iconPath: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
+  { id: 'fees', label: 'Fees & Costs', desc: 'Official DHA and VFS fee schedule', count: '20+', color: '#d4a843', iconPath: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
+  { id: 'times', label: 'Processing Times', desc: 'Standard and expedited timelines', count: '12', color: '#f59e0b', iconPath: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
+  { id: 'country', label: 'Country Check', desc: 'Visa exemptions by nationality', count: '130+', color: '#06b6d4', iconPath: 'M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
+  { id: 'offices', label: 'DHA Offices', desc: 'Home Affairs and VFS locations', count: '7', color: '#ec4899', iconPath: 'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z' },
+  { id: 'bodies', label: 'Professional Bodies', desc: 'Registration for Critical Skills visa', count: '13', color: '#8b5cf6', iconPath: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4' },
+  { id: 'faq', label: 'FAQ', desc: 'Common immigration questions answered', count: '20+', color: '#14b8a6', iconPath: 'M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
+];
+
 export default function KnowledgeHub() {
   const [tab, setTab] = useState('overview');
   const [data, setData] = useState({});
@@ -275,10 +287,11 @@ export default function KnowledgeHub() {
   const [countryInput, setCountryInput] = useState('');
   const [countryData, setCountryData] = useState(null);
   const [expandedFaq, setExpandedFaq] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadTab(tab);
-  }, [tab]);
+  }, [tab]); // eslint-disable-line
 
   async function loadTab(t) {
     if (data[t]) return;
@@ -317,15 +330,120 @@ export default function KnowledgeHub() {
 
   const Loader = () => <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}><div className="spinner" /></div>;
 
+  /* Discovery view (search-first) */
+  if (tab === 'overview') {
+    return (
+      <div style={s.page}>
+        <div className="container">
+          {/* Header */}
+          <div style={s.discoveryHeader}>
+            <h1 style={s.discoveryTitle}>Knowledge Hub</h1>
+            <p style={s.discoverySubtitle}>Everything you need to know about South African immigration</p>
+          </div>
+
+          {/* Prominent Search Bar */}
+          <div style={s.searchHero}>
+            <svg style={s.searchIcon} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#52525b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Search visas, skills, documents, fees..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              style={s.searchHeroInput}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && search.trim()) {
+                  setTab('faq');
+                }
+              }}
+            />
+          </div>
+
+          {/* Ask Senzwa AI Card */}
+          <button onClick={() => navigate('/messages')} style={s.askCard}>
+            <div style={s.askIconWrap}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d4a843" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+              </svg>
+            </div>
+            <div style={s.askTextWrap}>
+              <span style={s.askTitle}>Ask Senzwa AI</span>
+              <span style={s.askDesc}>Get instant answers about any immigration topic</span>
+            </div>
+            <span style={s.askArrow}>&rsaquo;</span>
+          </button>
+
+          {/* Stats Highlights */}
+          <div style={s.statsRow}>
+            {[
+              { n: '22+', l: 'Visa Types' },
+              { n: '80+', l: 'Critical Skills' },
+              { n: '130+', l: 'Countries' },
+              { n: '13', l: 'Prof. Bodies' },
+            ].map((st, i) => (
+              <div key={i} style={s.statPill}>
+                <span style={s.statPillNum}>{st.n}</span>
+                <span style={s.statPillLabel}>{st.l}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Category Cards */}
+          <h2 style={s.catSectionTitle}>Browse by Category</h2>
+          <div style={s.catGrid}>
+            {CATEGORIES.map(cat => (
+              <button key={cat.id} onClick={() => { setTab(cat.id); loadTab(cat.id); }} style={s.catCard}>
+                <div style={{ ...s.catIconWrap, background: cat.color + '15', borderColor: cat.color + '30' }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={cat.color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d={cat.iconPath} />
+                  </svg>
+                </div>
+                <div style={s.catInfo}>
+                  <span style={s.catLabel}>{cat.label}</span>
+                  <span style={s.catDesc}>{cat.desc}</span>
+                </div>
+                <div style={s.catRight}>
+                  <span style={{ ...s.catCount, color: cat.color }}>{cat.count}</span>
+                  <span style={s.catArrow}>&rsaquo;</span>
+                </div>
+              </button>
+            ))}
+          </div>
+
+          {/* Quick Explore Links */}
+          <div style={s.quickExplore}>
+            <Link to="/visas" style={s.quickExploreBtn}>
+              <span style={s.quickExploreTxt}>Explore All Visa Categories</span>
+              <span style={s.quickExploreArrow}>&rarr;</span>
+            </Link>
+            <Link to="/eligibility" style={s.quickExploreBtn}>
+              <span style={s.quickExploreTxt}>Check Your Eligibility</span>
+              <span style={s.quickExploreArrow}>&rarr;</span>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* Tab content view */
   return (
     <div style={s.page}>
       <div className="container">
-        <h1 style={s.title}>Knowledge Hub</h1>
-        <p style={s.subtitle}>Complete self-service reference for South African immigration. Everything you need, in one place.</p>
+        {/* Back + Title */}
+        <div style={s.tabHeader}>
+          <button onClick={() => setTab('overview')} style={s.backBtn}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a1a1aa" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" />
+            </svg>
+          </button>
+          <h1 style={s.tabHeaderTitle}>{TABS.find(t => t.id === tab)?.label || 'Knowledge Hub'}</h1>
+        </div>
 
-        {/* Tabs */}
+        {/* Secondary Tab Nav */}
         <div style={s.tabs}>
-          {TABS.map(t => (
+          {TABS.filter(t => t.id !== 'overview').map(t => (
             <button key={t.id} onClick={() => setTab(t.id)} style={{ ...s.tabBtn, ...(tab === t.id ? s.tabActive : {}) }}>
               {t.label}
             </button>
@@ -334,27 +452,6 @@ export default function KnowledgeHub() {
 
         {loading && !data[tab] ? <Loader /> : (
           <div>
-            {/* Overview */}
-            {tab === 'overview' && data.overview && (
-              <div>
-                <div style={s.statsGrid}>
-                  {[
-                    { n: data.overview.totalVisaCategories || '22+', l: 'Visa Categories' },
-                    { n: data.overview.totalCriticalSkills || '80+', l: 'Critical Skills' },
-                    { n: '130+', l: 'Countries Covered' },
-                    { n: '13', l: 'Professional Bodies' },
-                  ].map((st, i) => (
-                    <div key={i} style={s.statCard}><span style={s.statNum}>{st.n}</span><span style={s.statLabel}>{st.l}</span></div>
-                  ))}
-                </div>
-                <div style={s.quickLinks}>
-                  {TABS.slice(1).map(t => (
-                    <button key={t.id} onClick={() => setTab(t.id)} style={s.quickBtn}>{t.label}<span style={s.quickArrow}>&rarr;</span></button>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* All Visas */}
             {tab === 'visas' && data.visas && (
               <div>
@@ -484,7 +581,7 @@ export default function KnowledgeHub() {
                   <div key={i} style={s.timeRow}>
                     <span style={s.timeCat}>{(item.category || item.name || '').replace(/_/g, ' ')}</span>
                     <div style={s.timeValues}>
-                      <span style={s.timeStd}>{item.standard || item.standardDays || '—'}</span>
+                      <span style={s.timeStd}>{item.standard || item.standardDays || '\u2014'}</span>
                       {item.expedited && <span style={s.timeExp}>{item.expedited}</span>}
                     </div>
                   </div>
@@ -573,22 +670,100 @@ export default function KnowledgeHub() {
 
 const s = {
   page: { paddingTop: 88, paddingBottom: 48, minHeight: '100vh' },
-  title: { fontSize: 32, fontWeight: 800, color: '#fafafa', letterSpacing: '-0.02em', marginBottom: 8 },
-  subtitle: { fontSize: 15, color: '#a1a1aa', lineHeight: 1.6, marginBottom: 28, maxWidth: 600 },
-  tabs: { display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 32, padding: '4px', background: '#111113', borderRadius: 12 },
+
+  // Discovery View
+  discoveryHeader: { textAlign: 'center', marginBottom: 28 },
+  discoveryTitle: { fontSize: 32, fontWeight: 800, color: '#fafafa', letterSpacing: '-0.02em', marginBottom: 8 },
+  discoverySubtitle: { fontSize: 15, color: '#a1a1aa', lineHeight: 1.6, maxWidth: 480, margin: '0 auto' },
+
+  searchHero: { position: 'relative', marginBottom: 16 },
+  searchIcon: { position: 'absolute', left: 18, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' },
+  searchHeroInput: {
+    width: '100%', padding: '16px 18px 16px 48px', fontSize: 16, fontFamily: 'inherit', color: '#fafafa',
+    background: 'rgba(26,26,29,0.7)', backdropFilter: 'blur(24px) saturate(200%)',
+    WebkitBackdropFilter: 'blur(24px) saturate(200%)',
+    border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, outline: 'none',
+    transition: 'all 0.3s',
+  },
+
+  askCard: {
+    display: 'flex', alignItems: 'center', gap: 14, width: '100%', padding: '16px 18px',
+    background: 'rgba(212,168,67,0.06)', backdropFilter: 'blur(16px)',
+    WebkitBackdropFilter: 'blur(16px)',
+    border: '1px solid rgba(212,168,67,0.15)', borderRadius: 14,
+    marginBottom: 20, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
+    transition: 'all 0.3s',
+  },
+  askIconWrap: {
+    width: 42, height: 42, borderRadius: 12, flexShrink: 0,
+    background: 'rgba(212,168,67,0.1)', border: '1px solid rgba(212,168,67,0.2)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+  },
+  askTextWrap: { flex: 1, display: 'flex', flexDirection: 'column' },
+  askTitle: { fontSize: 14, fontWeight: 700, color: '#d4a843' },
+  askDesc: { fontSize: 12, color: '#a1a1aa', marginTop: 1 },
+  askArrow: { fontSize: 24, color: '#d4a843', fontWeight: 300 },
+
+  statsRow: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 28 },
+  statPill: {
+    background: 'rgba(26,26,29,0.6)', backdropFilter: 'blur(16px) saturate(180%)',
+    WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+    border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12,
+    padding: '14px 8px', textAlign: 'center',
+    display: 'flex', flexDirection: 'column', gap: 2,
+  },
+  statPillNum: { fontSize: 20, fontWeight: 800, color: '#d4a843', letterSpacing: '-0.02em' },
+  statPillLabel: { fontSize: 10, fontWeight: 600, color: '#52525b', textTransform: 'uppercase', letterSpacing: '0.04em' },
+
+  catSectionTitle: { fontSize: 16, fontWeight: 700, color: '#fafafa', marginBottom: 12 },
+  catGrid: { display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 24 },
+  catCard: {
+    display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px',
+    background: 'rgba(26,26,29,0.6)', backdropFilter: 'blur(20px) saturate(180%)',
+    WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+    border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14,
+    cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left', width: '100%',
+    transition: 'all 0.3s',
+  },
+  catIconWrap: {
+    width: 42, height: 42, borderRadius: 12, flexShrink: 0,
+    border: '1px solid transparent',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+  },
+  catInfo: { flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 },
+  catLabel: { fontSize: 14, fontWeight: 600, color: '#fafafa' },
+  catDesc: { fontSize: 12, color: '#52525b', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+  catRight: { display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 },
+  catCount: { fontSize: 13, fontWeight: 700 },
+  catArrow: { fontSize: 20, color: '#52525b', fontWeight: 300 },
+
+  quickExplore: { display: 'flex', flexDirection: 'column', gap: 8 },
+  quickExploreBtn: {
+    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+    padding: '16px 18px', borderRadius: 12,
+    background: 'rgba(26,26,29,0.6)', backdropFilter: 'blur(16px) saturate(180%)',
+    WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+    border: '1px solid rgba(255,255,255,0.08)', textDecoration: 'none',
+    transition: 'all 0.2s',
+  },
+  quickExploreTxt: { fontSize: 14, fontWeight: 600, color: '#fafafa' },
+  quickExploreArrow: { fontSize: 16, color: '#d4a843' },
+
+  // Tab Content View
+  tabHeader: { display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 },
+  backBtn: {
+    width: 36, height: 36, borderRadius: 10,
+    background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    cursor: 'pointer', flexShrink: 0,
+  },
+  tabHeaderTitle: { fontSize: 24, fontWeight: 800, color: '#fafafa', letterSpacing: '-0.02em' },
+
+  tabs: { display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 24, padding: '4px', background: 'rgba(17,17,19,0.6)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderRadius: 12 },
   tabBtn: { padding: '8px 14px', background: 'transparent', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, color: '#a1a1aa', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s', whiteSpace: 'nowrap' },
   tabActive: { background: 'rgba(26,26,29,0.7)', color: '#d4a843' },
   searchInput: { width: '100%', padding: '14px 18px', background: 'rgba(26,26,29,0.6)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, fontSize: 15, color: '#fafafa', fontFamily: 'inherit', outline: 'none', marginBottom: 20 },
   muted: { color: '#52525b', fontSize: 14, textAlign: 'center', padding: 40 },
-
-  // Overview
-  statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, marginBottom: 28 },
-  statCard: { background: 'rgba(26,26,29,0.6)', backdropFilter: 'blur(16px) saturate(180%)', WebkitBackdropFilter: 'blur(16px) saturate(180%)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: '24px 20px', textAlign: 'center' },
-  statNum: { display: 'block', fontSize: 28, fontWeight: 800, color: '#d4a843', letterSpacing: '-0.02em' },
-  statLabel: { display: 'block', fontSize: 12, color: '#52525b', marginTop: 4, textTransform: 'uppercase', letterSpacing: '0.05em' },
-  quickLinks: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 10 },
-  quickBtn: { background: 'rgba(26,26,29,0.6)', backdropFilter: 'blur(16px) saturate(180%)', WebkitBackdropFilter: 'blur(16px) saturate(180%)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '16px 18px', fontSize: 14, fontWeight: 600, color: '#fafafa', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left', display: 'flex', justifyContent: 'space-between', alignItems: 'center', transition: 'all 0.2s' },
-  quickArrow: { color: '#d4a843', fontSize: 16 },
 
   // Visas
   visaGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 },
