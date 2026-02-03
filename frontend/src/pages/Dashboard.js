@@ -37,8 +37,15 @@ export default function Dashboard() {
     </div>
   );
 
-  const completedSteps = [!!profile, !!evaluation, applications.length > 0].filter(Boolean).length;
-  const totalSteps = 5;
+  const steps = [
+    { done: !!profile, label: 'Profile Complete' },
+    { done: !!evaluation, label: 'Eligibility Assessed' },
+    { done: applications.length > 0, label: 'Application Started' },
+    { done: applications.some(a => a.status !== 'draft'), label: 'Documents Submitted' },
+    { done: applications.some(a => ['submitted', 'approved'].includes(a.status)), label: 'Application Submitted' },
+  ];
+  const completedSteps = steps.filter(s => s.done).length;
+  const totalSteps = steps.length;
   const progressPct = Math.round((completedSteps / totalSteps) * 100);
 
   const activeApps = applications.filter(a => !['approved', 'rejected'].includes(a.status));

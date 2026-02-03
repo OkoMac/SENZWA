@@ -171,6 +171,11 @@ img {
   50% { box-shadow: 0 0 30px rgba(212, 168, 67, 0.2); }
 }
 
+@keyframes typingBounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-4px); }
+}
+
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
@@ -568,6 +573,24 @@ input[type="checkbox"] {
   gap: 16px;
   color: var(--text-muted);
   font-size: 14px;
+}
+
+/* ============================================
+   INTERACTIVE GLASS ELEMENTS
+   ============================================ */
+
+/* Focus glow for search inputs */
+input[style*="backdrop-filter"]:focus,
+input[style*="backdropFilter"]:focus {
+  border-color: var(--accent-gold) !important;
+  box-shadow: 0 0 0 3px var(--accent-gold-dim);
+}
+
+/* Safe-area padding for bottom-fixed elements on notched devices */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }
 
 /* ============================================

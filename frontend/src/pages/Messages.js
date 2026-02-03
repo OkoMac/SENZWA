@@ -35,16 +35,16 @@ export default function Messages() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, typing]);
 
-  const send = () => {
-    if (!input.trim()) return;
-    const userMsg = { id: Date.now(), from: 'user', text: input.trim(), time: new Date() };
+  const send = (directText) => {
+    const text = (directText || input).trim();
+    if (!text) return;
+    const userMsg = { id: Date.now(), from: 'user', text, time: new Date() };
     setMessages(prev => [...prev, userMsg]);
-    const query = input.trim();
     setInput('');
     setTyping(true);
 
     setTimeout(() => {
-      const aiMsg = { id: Date.now() + 1, from: 'ai', text: getAIResponse(query), time: new Date() };
+      const aiMsg = { id: Date.now() + 1, from: 'ai', text: getAIResponse(text), time: new Date() };
       setMessages(prev => [...prev, aiMsg]);
       setTyping(false);
     }, 800 + Math.random() * 1200);
@@ -110,7 +110,7 @@ export default function Messages() {
       {messages.length <= 2 && (
         <div style={s.suggestions}>
           {suggestions.map((sug, i) => (
-            <button key={i} onClick={() => { setInput(sug); setTimeout(() => { setInput(sug); send(); }, 50); }} style={s.sugBtn}>
+            <button key={i} onClick={() => send(sug)} style={s.sugBtn}>
               {sug}
             </button>
           ))}
@@ -176,8 +176,8 @@ const s = {
   msgTime: { fontSize: 10, opacity: 0.6, display: 'block', marginTop: 4, textAlign: 'right' },
   typingDots: { display: 'flex', gap: 4, padding: '4px 0' },
   dot: {
-    width: 6, height: 6, borderRadius: '50%', background: '#52525b',
-    animation: 'pulse 1s ease-in-out infinite',
+    width: 6, height: 6, borderRadius: '50%', background: '#a1a1aa',
+    animation: 'typingBounce 1.2s ease-in-out infinite',
   },
   suggestions: {
     position: 'fixed', bottom: 80, left: 0, right: 0,
