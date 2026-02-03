@@ -12,8 +12,8 @@ export default function BottomNav() {
 
   // Hide on secondary screens per spec
   if (HIDDEN_PATTERNS.some(p => path.startsWith(p) && path !== '/visas')) return null;
-  // Also hide on login/register
-  if (['/login', '/register'].includes(path)) return null;
+  // Also hide on login/register/landing
+  if (['/', '/login', '/register'].includes(path)) return null;
 
   const tabs = [
     { to: user ? '/dashboard' : '/', label: 'Home', icon: HomeIcon, match: ['/', '/dashboard'] },
