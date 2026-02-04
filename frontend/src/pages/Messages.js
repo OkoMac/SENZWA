@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Logo from '../components/Logo';
+import { chatAPI } from '../services/api';
 
 const AI_RESPONSES = {
   default: "I'm Senzwa AI, your immigration assistant. I can help you understand visa categories, check eligibility requirements, explain document needs, and guide you through the application process. What would you like to know?",
@@ -89,7 +90,7 @@ export default function Messages() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, typing]);
 
-  const send = (directText) => {
+  const send = async (directText) => {
     const text = (directText || input).trim();
     if (!text) return;
     const userMsg = { id: Date.now(), from: 'user', text, time: new Date() };
@@ -97,13 +98,25 @@ export default function Messages() {
     setInput('');
     setTyping(true);
 
-    setTimeout(() => {
+    try {
+      // Try backend conversation API
+      const token = localStorage.getItem('senzwa_token');
+      const res = token
+        ? await chatAPI.sendAuthMessage(text)
+        : await chatAPI.sendMessage(text);
+      const responseText = res.data.response.text;
+      const aiMsg = { id: Date.now() + 1, from: 'ai', text: responseText, time: new Date() };
+      setMessages(prev => [...prev, aiMsg]);
+      setLastAIResponse(responseText);
+    } catch {
+      // Fallback to local AI responses if backend unavailable
       const response = getAIResponse(text);
       const aiMsg = { id: Date.now() + 1, from: 'ai', text: response, time: new Date() };
       setMessages(prev => [...prev, aiMsg]);
       setLastAIResponse(response);
+    } finally {
       setTyping(false);
-    }, 800 + Math.random() * 1200);
+    }
   };
 
   const handleKeyDown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } };

@@ -29,5 +29,9 @@ uploads/*
 .DS_Store
 Thumbs.db
 
+# Database
+backend/data/
+*.sqlite3
+
 # Coverage
 coverage/

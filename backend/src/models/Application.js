@@ -1,104 +1,134 @@
 const { v4: uuidv4 } = require('uuid');
-
-const applications = [];
+const { db } = require('../config/database');
 
 class Application {
-  static create({ applicantId, visaCategoryId, userId }) {
+  static async create({ applicantId, visaCategoryId, userId }) {
+    const now = new Date().toISOString();
     const application = {
       id: uuidv4(),
-      applicantId,
-      visaCategoryId,
-      userId,
-      status: 'draft', // draft, documents_pending, under_review, compiled, submitted, approved, rejected
-      eligibilityScore: null,
-      riskFlags: [],
-      documents: [],
-      compiledPackage: null,
-      auditTrail: [
-        {
-          action: 'application_created',
-          timestamp: new Date().toISOString(),
-          details: 'Application initiated',
-        },
-      ],
-      submittedAt: null,
-      reviewedAt: null,
-      decidedAt: null,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      applicant_id: applicantId || null,
+      visa_category_id: visaCategoryId,
+      user_id: userId,
+      status: 'draft',
+      eligibility_score: null,
+      risk_flags: JSON.stringify([]),
+      compiled_package: null,
+      audit_trail: JSON.stringify([
+        { action: 'application_created', timestamp: now, details: 'Application initiated' },
+      ]),
+      submitted_at: null,
+      reviewed_at: null,
+      decided_at: null,
+      created_at: now,
+      updated_at: now,
     };
 
-    applications.push(application);
-    return application;
+    await db('applications').insert(application);
+    return Application.toCamel(application);
   }
 
-  static findById(id) {
-    return applications.find((a) => a.id === id) || null;
+  static async findById(id) {
+    const row = await db('applications').where('id', id).first();
+    return row ? Application.toCamel(row) : null;
   }
 
-  static findByApplicantId(applicantId) {
-    return applications.filter((a) => a.applicantId === applicantId);
+  static async findByApplicantId(applicantId) {
+    const rows = await db('applications').where('applicant_id', applicantId);
+    return rows.map(Application.toCamel);
   }
 
-  static findByUserId(userId) {
-    return applications.filter((a) => a.userId === userId);
+  static async findByUserId(userId) {
+    const rows = await db('applications').where('user_id', userId);
+    return rows.map(Application.toCamel);
   }
 
-  static update(id, updates) {
-    const idx = applications.findIndex((a) => a.id === id);
-    if (idx === -1) throw new Error('Application not found');
+  static async update(id, updates) {
+    const mapping = {
+      status: 'status', eligibilityScore: 'eligibility_score',
+      submittedAt: 'submitted_at', reviewedAt: 'reviewed_at', decidedAt: 'decided_at',
+    };
+    const jsonFields = {
+      riskFlags: 'risk_flags', compiledPackage: 'compiled_package',
+    };
 
-    const allowed = [
-      'status', 'eligibilityScore', 'riskFlags', 'documents',
-      'compiledPackage', 'submittedAt', 'reviewedAt', 'decidedAt',
-    ];
-
-    for (const key of allowed) {
-      if (updates[key] !== undefined) {
-        applications[idx][key] = updates[key];
-      }
+    const dbUpdates = {};
+    for (const [jsKey, dbKey] of Object.entries(mapping)) {
+      if (updates[jsKey] !== undefined) dbUpdates[dbKey] = updates[jsKey];
     }
-    applications[idx].updatedAt = new Date().toISOString();
-    return applications[idx];
+    for (const [jsKey, dbKey] of Object.entries(jsonFields)) {
+      if (updates[jsKey] !== undefined) dbUpdates[dbKey] = JSON.stringify(updates[jsKey]);
+    }
+    dbUpdates.updated_at = new Date().toISOString();
+
+    const count = await db('applications').where('id', id).update(dbUpdates);
+    if (count === 0) throw new Error('Application not found');
+    const row = await db('applications').where('id', id).first();
+    return Application.toCamel(row);
   }
 
-  static addAuditEntry(id, action, details, userId = null) {
-    const idx = applications.findIndex((a) => a.id === id);
-    if (idx === -1) throw new Error('Application not found');
+  static async addAuditEntry(id, action, details, userId = null) {
+    const row = await db('applications').where('id', id).first();
+    if (!row) throw new Error('Application not found');
 
-    applications[idx].auditTrail.push({
-      action,
-      timestamp: new Date().toISOString(),
-      details,
-      userId,
+    const trail = Application.parseJSON(row.audit_trail) || [];
+    trail.push({ action, timestamp: new Date().toISOString(), details, userId });
+
+    await db('applications').where('id', id).update({
+      audit_trail: JSON.stringify(trail),
+      updated_at: new Date().toISOString(),
     });
 
-    return applications[idx];
+    const updated = await db('applications').where('id', id).first();
+    return Application.toCamel(updated);
   }
 
-  static addDocument(applicationId, document) {
-    const idx = applications.findIndex((a) => a.id === applicationId);
-    if (idx === -1) throw new Error('Application not found');
-
-    applications[idx].documents.push({
-      ...document,
-      uploadedAt: new Date().toISOString(),
-    });
-
-    return applications[idx];
+  static async addDocument(applicationId, document) {
+    // Documents are now in the documents table, this is a no-op for backward compat
+    return Application.findById(applicationId);
   }
 
-  static list({ status, userId, page = 1, limit = 20 }) {
-    let filtered = [...applications];
-    if (status) filtered = filtered.filter((a) => a.status === status);
-    if (userId) filtered = filtered.filter((a) => a.userId === userId);
+  static async list({ status, userId, page = 1, limit = 20 }) {
+    let query = db('applications');
+    if (status) query = query.where('status', status);
+    if (userId) query = query.where('user_id', userId);
 
-    const start = (page - 1) * limit;
+    const countResult = await query.clone().count('* as count').first();
+    const rows = await query
+      .orderBy('created_at', 'desc')
+      .offset((page - 1) * limit)
+      .limit(limit);
+
     return {
-      applications: filtered.slice(start, start + limit),
-      total: filtered.length,
+      applications: rows.map(Application.toCamel),
+      total: countResult.count,
       page,
       limit,
+    };
+  }
+
+  static parseJSON(val) {
+    if (val === null || val === undefined) return null;
+    if (typeof val === 'string') { try { return JSON.parse(val); } catch { return val; } }
+    return val;
+  }
+
+  static toCamel(row) {
+    return {
+      id: row.id,
+      applicantId: row.applicant_id,
+      visaCategoryId: row.visa_category_id,
+      userId: row.user_id,
+      status: row.status,
+      eligibilityScore: row.eligibility_score,
+      riskFlags: Application.parseJSON(row.risk_flags) || [],
+      documents: [], // Backward compat; docs now in documents table
+      compiledPackage: Application.parseJSON(row.compiled_package),
+      auditTrail: Application.parseJSON(row.audit_trail) || [],
+      submittedAt: row.submitted_at,
+      reviewedAt: row.reviewed_at,
+      decidedAt: row.decided_at,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
     };
   }
 }

@@ -1,8 +1,6 @@
 const { v4: uuidv4 } = require('uuid');
+const { db } = require('../config/database');
 const logger = require('../utils/logger');
-
-// In-memory audit store (replace with DB in production)
-const auditStore = [];
 
 function auditLog(req, res, next) {
   const entry = {
@@ -11,46 +9,60 @@ function auditLog(req, res, next) {
     method: req.method,
     path: req.originalUrl,
     ip: req.ip,
-    userAgent: req.get('user-agent'),
-    userId: req.user?.id || null,
+    user_agent: req.get('user-agent') || null,
+    user_id: req.user?.id || null,
+    _startTime: Date.now(),
   };
 
   // Capture response
   const originalJson = res.json.bind(res);
   res.json = function (body) {
-    entry.statusCode = res.statusCode;
-    entry.responseTime = Date.now() - entry._startTime;
-    auditStore.push(entry);
+    const record = {
+      id: entry.id,
+      method: entry.method,
+      path: entry.path,
+      ip: entry.ip,
+      user_agent: entry.user_agent,
+      user_id: entry.user_id,
+      status_code: res.statusCode,
+      response_time: Date.now() - entry._startTime,
+      timestamp: entry.timestamp,
+    };
 
-    if (auditStore.length > 10000) {
-      auditStore.shift();
-    }
+    // Write to DB asynchronously (don't block response)
+    db('audit_logs').insert(record).catch((err) => {
+      logger.error('Failed to write audit log', { error: err.message });
+    });
 
     logger.debug('Audit log entry', { auditId: entry.id, path: entry.path });
     return originalJson(body);
   };
 
-  entry._startTime = Date.now();
   next();
 }
 
-function getAuditLogs(filters = {}) {
-  let logs = [...auditStore];
+async function getAuditLogs(filters = {}) {
+  let query = db('audit_logs').orderBy('timestamp', 'desc');
 
   if (filters.userId) {
-    logs = logs.filter((l) => l.userId === filters.userId);
+    query = query.where('user_id', filters.userId);
   }
   if (filters.path) {
-    logs = logs.filter((l) => l.path.includes(filters.path));
+    query = query.where('path', 'like', `%${filters.path}%`);
   }
   if (filters.startDate) {
-    logs = logs.filter((l) => new Date(l.timestamp) >= new Date(filters.startDate));
+    query = query.where('timestamp', '>=', filters.startDate);
   }
   if (filters.endDate) {
-    logs = logs.filter((l) => new Date(l.timestamp) <= new Date(filters.endDate));
+    query = query.where('timestamp', '<=', filters.endDate);
+  }
+  if (filters.limit) {
+    query = query.limit(filters.limit);
+  } else {
+    query = query.limit(500);
   }
 
-  return logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  return query;
 }
 
 module.exports = { auditLog, getAuditLogs };

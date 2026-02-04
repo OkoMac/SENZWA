@@ -1,12 +1,10 @@
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
-
-// In-memory store (replace with PostgreSQL in production)
-const users = [];
+const { db } = require('../config/database');
 
 class User {
   static async create({ email, password, firstName, lastName, phone, role = 'applicant' }) {
-    const existing = users.find((u) => u.email === email);
+    const existing = await db('users').where('email', email).first();
     if (existing) {
       throw new Error('Email already registered');
     }
@@ -17,26 +15,28 @@ class User {
     const user = {
       id: uuidv4(),
       email,
-      passwordHash,
-      firstName,
-      lastName,
-      phone,
-      role, // applicant, agent, admin
-      isVerified: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      password_hash: passwordHash,
+      first_name: firstName,
+      last_name: lastName,
+      phone: phone || null,
+      role,
+      is_verified: false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     };
 
-    users.push(user);
-    return User.sanitize(user);
+    await db('users').insert(user);
+    return User.sanitize(User.toCamel(user));
   }
 
   static async findByEmail(email) {
-    return users.find((u) => u.email === email) || null;
+    const row = await db('users').where('email', email).first();
+    return row ? User.toCamel(row) : null;
   }
 
   static async findById(id) {
-    return users.find((u) => u.id === id) || null;
+    const row = await db('users').where('id', id).first();
+    return row ? User.toCamel(row) : null;
   }
 
   static async verifyPassword(user, password) {
@@ -44,17 +44,19 @@ class User {
   }
 
   static async updateProfile(id, updates) {
-    const idx = users.findIndex((u) => u.id === id);
-    if (idx === -1) throw new Error('User not found');
-
-    const allowed = ['firstName', 'lastName', 'phone'];
-    for (const key of allowed) {
-      if (updates[key] !== undefined) {
-        users[idx][key] = updates[key];
+    const mapping = { firstName: 'first_name', lastName: 'last_name', phone: 'phone' };
+    const dbUpdates = {};
+    for (const [jsKey, dbKey] of Object.entries(mapping)) {
+      if (updates[jsKey] !== undefined) {
+        dbUpdates[dbKey] = updates[jsKey];
       }
     }
-    users[idx].updatedAt = new Date().toISOString();
-    return User.sanitize(users[idx]);
+    dbUpdates.updated_at = new Date().toISOString();
+
+    const count = await db('users').where('id', id).update(dbUpdates);
+    if (count === 0) throw new Error('User not found');
+    const row = await db('users').where('id', id).first();
+    return User.sanitize(User.toCamel(row));
   }
 
   static sanitize(user) {
@@ -63,14 +65,32 @@ class User {
   }
 
   static async list({ role, page = 1, limit = 20 }) {
-    let filtered = [...users];
-    if (role) filtered = filtered.filter((u) => u.role === role);
-    const start = (page - 1) * limit;
+    let query = db('users');
+    if (role) query = query.where('role', role);
+
+    const countResult = await query.clone().count('* as count').first();
+    const rows = await query.offset((page - 1) * limit).limit(limit);
+
     return {
-      users: filtered.slice(start, start + limit).map(User.sanitize),
-      total: filtered.length,
+      users: rows.map((r) => User.sanitize(User.toCamel(r))),
+      total: countResult.count,
       page,
       limit,
+    };
+  }
+
+  static toCamel(row) {
+    return {
+      id: row.id,
+      email: row.email,
+      passwordHash: row.password_hash,
+      firstName: row.first_name,
+      lastName: row.last_name,
+      phone: row.phone,
+      role: row.role,
+      isVerified: !!row.is_verified,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
     };
   }
 }
