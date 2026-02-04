@@ -235,6 +235,30 @@ class EligibilityEngine {
       return { met: false, details: 'Must be legally married to SA citizen or PR', severity: 'high' };
     }
 
+    // Marriage recognition under SA law
+    if (req.includes('marriage must be recognized') || req.includes('recognized under south african law')) {
+      if (profile.maritalStatus === 'married') {
+        return { met: true, details: 'Marriage submitted for recognition verification' };
+      }
+      return { met: false, details: 'Marriage must be recognized under South African law', severity: 'high' };
+    }
+
+    // Proof of genuine relationship
+    if (req.includes('genuine relationship') || req.includes('proof of genuine')) {
+      if (profile.maritalStatus === 'married' || profile.hasLifePartnerInSA) {
+        return { met: true, details: 'Relationship documentation to be verified at submission' };
+      }
+      return { met: false, details: 'Proof of genuine relationship required', severity: 'medium' };
+    }
+
+    // Spouse financial undertaking
+    if (req.includes('spouse financial undertaking') || req.includes('sa spouse financial')) {
+      if (profile.spouseIsSACitizen || profile.spouseHasFinancialUndertaking) {
+        return { met: true, details: 'SA spouse financial undertaking to be provided' };
+      }
+      return { met: false, details: 'SA spouse financial undertaking required', severity: 'medium' };
+    }
+
     // Family relationship
     if (req.includes('immediate family member')) {
       if (profile.familyTiesInSA && profile.familyTiesInSA.relationship) {
