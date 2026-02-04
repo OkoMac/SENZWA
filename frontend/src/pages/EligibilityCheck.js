@@ -48,7 +48,11 @@ export default function EligibilityCheck() {
           </div>
         ) : !results ? (
           <div style={s.readyCard}>
-            <div style={s.readyIcon}>AI</div>
+            <div style={s.readyIcon}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d4a843" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+            </div>
             <h2 style={s.readyTitle}>Profile Ready</h2>
             <p style={s.readyText}>Your profile is complete. Our AI engine will evaluate your eligibility across all 22+ visa categories.</p>
             <div style={s.profileSummary}>
@@ -77,11 +81,23 @@ export default function EligibilityCheck() {
                 <span style={s.recommendLabel}>RECOMMENDED PATHWAY</span>
                 <h2 style={s.recommendTitle}>{results.recommendedPathway.name}</h2>
                 <p style={s.recommendDesc}>{results.recommendedPathway.description}</p>
-                <div style={s.scoreBar}>
-                  <div style={s.scoreBarBg}>
-                    <div style={{ ...s.scoreBarFill, width: `${results.recommendedPathway.score || 0}%` }} />
+                <div style={s.scoreRow}>
+                  <div style={s.scoreRingWrap}>
+                    <svg width="64" height="64" viewBox="0 0 64 64">
+                      <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="5" />
+                      <circle cx="32" cy="32" r="26" fill="none" stroke="#d4a843" strokeWidth="5"
+                        strokeLinecap="round"
+                        strokeDasharray={`${(results.recommendedPathway.score || 0) * 1.634} 163.4`}
+                        transform="rotate(-90 32 32)"
+                        style={{ transition: 'stroke-dasharray 0.8s ease' }}
+                      />
+                    </svg>
+                    <span style={s.scoreRingText}>{results.recommendedPathway.score || 0}%</span>
                   </div>
-                  <span style={s.scoreValue}>{results.recommendedPathway.score || 0}%</span>
+                  <div style={s.scoreInfo}>
+                    <span style={s.scoreLabel}>Eligibility Score</span>
+                    <span style={s.scoreSub}>{results.recommendedPathway.score >= 70 ? 'Strong match for your profile' : results.recommendedPathway.score >= 40 ? 'Partial match - review requirements' : 'Low match - explore other options'}</span>
+                  </div>
                 </div>
               </div>
             )}
@@ -133,7 +149,7 @@ const s = {
   noProfileTitle: { fontSize: 22, fontWeight: 700, color: '#fafafa', marginBottom: 8 },
   noProfileText: { fontSize: 14, color: '#a1a1aa', marginBottom: 24, maxWidth: 400, margin: '0 auto 24px' },
   readyCard: { background: 'rgba(26,26,29,0.6)', backdropFilter: 'blur(20px) saturate(180%)', WebkitBackdropFilter: 'blur(20px) saturate(180%)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 20, padding: '36px 32px', textAlign: 'center' },
-  readyIcon: { width: 56, height: 56, borderRadius: 16, background: 'linear-gradient(135deg, #d4a843 0%, #b8922e 100%)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#09090b', fontWeight: 800, fontSize: 18, marginBottom: 20 },
+  readyIcon: { width: 56, height: 56, borderRadius: 16, background: 'rgba(212,168,67,0.1)', border: '1px solid rgba(212,168,67,0.2)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 },
   readyTitle: { fontSize: 22, fontWeight: 700, color: '#fafafa', marginBottom: 8 },
   readyText: { fontSize: 14, color: '#a1a1aa', marginBottom: 24 },
   profileSummary: { background: 'rgba(255,255,255,0.03)', borderRadius: 12, padding: '16px', marginBottom: 24, textAlign: 'left' },
@@ -144,10 +160,12 @@ const s = {
   recommendLabel: { fontSize: 10, fontWeight: 700, color: '#d4a843', letterSpacing: '0.1em', textTransform: 'uppercase' },
   recommendTitle: { fontSize: 24, fontWeight: 800, color: '#fafafa', margin: '8px 0' },
   recommendDesc: { fontSize: 14, color: '#a1a1aa', lineHeight: 1.6, marginBottom: 16 },
-  scoreBar: { display: 'flex', alignItems: 'center', gap: 12 },
-  scoreBarBg: { flex: 1, height: 6, background: 'rgba(255,255,255,0.06)', borderRadius: 999, overflow: 'hidden' },
-  scoreBarFill: { height: '100%', background: 'linear-gradient(90deg, #d4a843, #e0b94f)', borderRadius: 999, transition: 'width 0.6s ease' },
-  scoreValue: { fontSize: 20, fontWeight: 800, color: '#d4a843' },
+  scoreRow: { display: 'flex', alignItems: 'center', gap: 18 },
+  scoreRingWrap: { position: 'relative', width: 64, height: 64, flexShrink: 0 },
+  scoreRingText: { position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', fontSize: 15, fontWeight: 800, color: '#d4a843' },
+  scoreInfo: { display: 'flex', flexDirection: 'column' },
+  scoreLabel: { fontSize: 14, fontWeight: 700, color: '#fafafa' },
+  scoreSub: { fontSize: 12, color: '#a1a1aa', marginTop: 2 },
   resultsTitle: { fontSize: 18, fontWeight: 700, color: '#fafafa', marginBottom: 16 },
   resultsList: { display: 'flex', flexDirection: 'column', gap: 10 },
   resultCard: { background: 'rgba(26,26,29,0.6)', backdropFilter: 'blur(16px) saturate(180%)', WebkitBackdropFilter: 'blur(16px) saturate(180%)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '18px 20px', borderLeft: '3px solid' },

@@ -21,8 +21,9 @@ export default function Landing() {
             <span style={styles.heroGold}>simplified.</span>
           </h1>
           <p style={styles.heroSub}>
-            Intelligent visa pathway selection, real-time document validation,
-            and structured application compilation. Built on the Immigration Act 13 of 2002.
+            Your calm, guided path to South African immigration.
+            AI-powered visa selection, real-time document validation,
+            and fully structured applications. Built on the Immigration Act 13 of 2002.
           </p>
           <div style={styles.heroCTA}>
             <Link to="/register" className="btn btn-primary btn-lg">
@@ -147,13 +148,43 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* Trust Indicators */}
+      <section style={styles.section}>
+        <div className="container">
+          <div style={styles.sectionLabel}>TRUSTED & SECURE</div>
+          <h2 style={styles.sectionTitle}>
+            Government-grade trust.{' '}
+            <span style={styles.heroGold}>Consumer-grade beauty.</span>
+          </h2>
+          <div style={styles.grid4}>
+            {[
+              { title: 'POPIA Compliant', desc: 'Full compliance with South African data protection laws. Your personal information is encrypted and protected.', icon: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z' },
+              { title: 'Immigration Act', desc: 'Built on the Immigration Act 13 of 2002. Every recommendation grounded in current legislation.', icon: 'M4 19.5A2.5 2.5 0 016.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z' },
+              { title: 'Full Audit Trail', desc: 'Every action timestamped and logged. Complete transparency for you, your advisor, and the authorities.', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' },
+              { title: 'AI-Guided', desc: '24/7 intelligent assistance. Never face confusion alone - Senzwa AI guides every step of your journey.', icon: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z' },
+            ].map((item, i) => (
+              <div key={i} style={styles.trustCard}>
+                <div style={styles.trustIcon}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d4a843" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d={item.icon} />
+                  </svg>
+                </div>
+                <h3 style={styles.trustTitle}>{item.title}</h3>
+                <p style={styles.cardDesc}>{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* CTA */}
       <section style={styles.ctaSection}>
         <div className="container" style={{ textAlign: 'center' }}>
           <h2 style={styles.ctaTitle}>Ready to start your migration journey?</h2>
-          <p style={styles.ctaSub}>Migration made clear. Lawfully guided. Accountable by design.</p>
+          <p style={styles.ctaSub}>If it feels calm, clear, and guided - it is Senzwa.</p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link to="/register" className="btn btn-primary btn-lg">Create Free Account</Link>
+            <Link to="/messages" className="btn btn-secondary btn-lg">Ask Senzwa AI</Link>
             <Link to="/knowledge" className="btn btn-outline btn-lg">Browse Knowledge Hub</Link>
           </div>
         </div>
@@ -219,6 +250,9 @@ const styles = {
   coverageItem: { padding: '6px 0', fontSize: 13, color: '#a1a1aa', borderBottom: '1px solid rgba(255,255,255,0.06)' },
   accountCard: { background: 'rgba(26,26,29,0.6)', backdropFilter: 'blur(20px) saturate(180%)', WebkitBackdropFilter: 'blur(20px) saturate(180%)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: '32px 28px', transition: 'all 0.3s ease' },
   accountTitle: { fontSize: 18, fontWeight: 700, color: '#fafafa', marginBottom: 10 },
+  trustCard: { background: 'rgba(26,26,29,0.6)', backdropFilter: 'blur(20px) saturate(180%)', WebkitBackdropFilter: 'blur(20px) saturate(180%)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: '24px 20px', transition: 'all 0.3s ease' },
+  trustIcon: { width: 40, height: 40, borderRadius: 10, background: 'rgba(212,168,67,0.08)', border: '1px solid rgba(212,168,67,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 },
+  trustTitle: { fontSize: 15, fontWeight: 700, color: '#fafafa', marginBottom: 8 },
   ctaSection: { padding: '100px 0', background: '#09090b' },
   ctaTitle: { fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.15, color: '#fafafa', marginBottom: 16 },
   ctaSub: { fontSize: 16, color: '#a1a1aa', marginBottom: 36, lineHeight: 1.6 },

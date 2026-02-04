@@ -16,6 +16,7 @@ const auditRoutes = require('./routes/audit');
 const adminRoutes = require('./routes/admin');
 const knowledgeRoutes = require('./routes/knowledge');
 const exportRoutes = require('./routes/export');
+const conversationRoutes = require('./routes/conversation');
 
 const { errorHandler, notFound } = require('./middleware/errorHandler');
 const { auditLog } = require('./middleware/auditLog');
@@ -69,6 +70,7 @@ app.use('/api/audit', auditRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/knowledge', knowledgeRoutes);
 app.use('/api/export', exportRoutes);
+app.use('/api/conversation', conversationRoutes);
 
 // Serve uploads
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));

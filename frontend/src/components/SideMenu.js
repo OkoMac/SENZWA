@@ -9,7 +9,7 @@ export default function SideMenu({ open, onClose }) {
   const navigate = useNavigate();
   const [expanded, setExpanded] = useState({});
 
-  useEffect(() => { onClose(); }, [location.pathname]);
+  useEffect(() => { onClose(); }, [location.pathname]); // eslint-disable-line
 
   useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : '';
@@ -31,12 +31,31 @@ export default function SideMenu({ open, onClose }) {
       ],
     },
     {
+      id: 'home',
+      title: 'Home & Dashboard',
+      show: !!user,
+      items: [
+        { to: '/dashboard', label: 'Dashboard' },
+        { to: '/onboarding', label: 'Update Profile' },
+      ],
+    },
+    {
+      id: 'applications',
+      title: 'My Applications',
+      show: !!user,
+      items: [
+        { to: '/tracker', label: 'Application Tracker' },
+        { to: '/visas', label: 'Start New Application' },
+        { to: '/eligibility', label: 'Eligibility Check' },
+      ],
+    },
+    {
       id: 'knowledge',
       title: 'Knowledge Hub',
       show: true,
       items: [
         { to: '/knowledge', label: 'Overview' },
-        { to: '/knowledge', label: 'All Visa Categories', state: { tab: 'visas' } },
+        { to: '/knowledge', label: 'Visa Categories', state: { tab: 'visas' } },
         { to: '/knowledge', label: 'Critical Skills List', state: { tab: 'skills' } },
         { to: '/knowledge', label: 'Country Requirements', state: { tab: 'country' } },
         { to: '/knowledge', label: 'Document Guide', state: { tab: 'docs' } },
@@ -48,22 +67,20 @@ export default function SideMenu({ open, onClose }) {
       ],
     },
     {
-      id: 'tools',
-      title: 'Immigration Tools',
+      id: 'support',
+      title: 'Support & Messages',
       show: true,
       items: [
-        { to: '/visas', label: 'Visa Explorer', auth: true },
-        { to: '/eligibility', label: 'Eligibility Check', auth: true },
-        { to: '/onboarding', label: 'Create Profile', auth: true },
+        { to: '/messages', label: 'Ask Senzwa AI' },
+        { to: '/knowledge', label: 'Help Center', state: { tab: 'faq' } },
       ],
     },
     {
-      id: 'applications',
-      title: 'My Applications',
+      id: 'account',
+      title: 'Account & Security',
       show: !!user,
       items: [
-        { to: '/dashboard', label: 'Dashboard' },
-        { to: '/tracker', label: 'Application Tracker' },
+        { to: '/profile', label: 'Profile Settings' },
       ],
     },
   ].filter(s => s.show);
@@ -122,7 +139,6 @@ export default function SideMenu({ open, onClose }) {
         <div style={{ flex: 1, padding: '12px 0', overflowY: 'auto' }}>
           {sections.map(section => (
             <div key={section.id} style={{ marginBottom: 4 }}>
-              {/* Section Header - Dropdown Toggle */}
               <button
                 onClick={() => toggle(section.id)}
                 style={{
@@ -148,35 +164,30 @@ export default function SideMenu({ open, onClose }) {
                 </span>
               </button>
 
-              {/* Dropdown Items */}
               <div style={{
                 maxHeight: expanded[section.id] ? 600 : 0,
                 overflow: 'hidden',
                 transition: 'max-height 0.3s ease',
               }}>
-                {section.items.map((item, i) => {
-                  const disabled = item.auth && !user;
-                  return (
-                    <Link
-                      key={i}
-                      to={disabled ? '/login' : item.to}
-                      state={item.state}
-                      onClick={onClose}
-                      style={{
-                        display: 'block',
-                        padding: '12px 24px 12px 40px',
-                        fontSize: 14, fontWeight: 500,
-                        color: disabled ? '#3f3f46' : (location.pathname === item.to ? '#d4a843' : '#a1a1aa'),
-                        textDecoration: 'none',
-                        transition: 'all 0.15s ease',
-                        borderLeft: location.pathname === item.to ? '2px solid #d4a843' : '2px solid transparent',
-                      }}
-                    >
-                      {item.label}
-                      {disabled && <span style={{ fontSize: 10, color: '#52525b', marginLeft: 8 }}>(login required)</span>}
-                    </Link>
-                  );
-                })}
+                {section.items.map((item, i) => (
+                  <Link
+                    key={i}
+                    to={item.to}
+                    state={item.state}
+                    onClick={onClose}
+                    style={{
+                      display: 'block',
+                      padding: '12px 24px 12px 40px',
+                      fontSize: 14, fontWeight: 500,
+                      color: location.pathname === item.to && !item.state ? '#d4a843' : '#a1a1aa',
+                      textDecoration: 'none',
+                      transition: 'all 0.15s ease',
+                      borderLeft: location.pathname === item.to && !item.state ? '2px solid #d4a843' : '2px solid transparent',
+                    }}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
               </div>
             </div>
           ))}

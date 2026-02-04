@@ -1,84 +1,107 @@
 const { v4: uuidv4 } = require('uuid');
-
-const applicants = [];
+const { db } = require('../config/database');
 
 class Applicant {
-  static create({
-    userId,
-    passportNumber,
-    nationality,
-    countryOfOrigin,
-    dateOfBirth,
-    gender,
-    maritalStatus,
-    purposeOfStay,
-    intendedDuration,
-    qualifications,
-    employmentHistory,
-    familyTiesInSA,
-    financialStanding,
-    currentVisaStatus,
-  }) {
+  static async create(data) {
     const applicant = {
       id: uuidv4(),
-      userId,
-      passportNumber,
-      nationality,
-      countryOfOrigin,
-      dateOfBirth,
-      gender,
-      maritalStatus,
-      purposeOfStay,
-      intendedDuration,
-      qualifications: qualifications || [],
-      employmentHistory: employmentHistory || [],
-      familyTiesInSA: familyTiesInSA || null,
-      financialStanding: financialStanding || null,
-      currentVisaStatus: currentVisaStatus || 'none',
-      onboardingComplete: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      user_id: data.userId,
+      passport_number: data.passportNumber || null,
+      nationality: data.nationality || null,
+      country_of_origin: data.countryOfOrigin || null,
+      date_of_birth: data.dateOfBirth || null,
+      gender: data.gender || null,
+      marital_status: data.maritalStatus || null,
+      purpose_of_stay: data.purposeOfStay || null,
+      intended_duration: data.intendedDuration || null,
+      qualifications: JSON.stringify(data.qualifications || []),
+      employment_history: JSON.stringify(data.employmentHistory || []),
+      family_ties_in_sa: JSON.stringify(data.familyTiesInSA || null),
+      financial_standing: JSON.stringify(data.financialStanding || null),
+      current_visa_status: data.currentVisaStatus || 'none',
+      onboarding_complete: false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     };
 
-    applicants.push(applicant);
-    return applicant;
+    await db('applicants').insert(applicant);
+    return Applicant.toCamel(applicant);
   }
 
-  static findByUserId(userId) {
-    return applicants.find((a) => a.userId === userId) || null;
+  static async findByUserId(userId) {
+    const row = await db('applicants').where('user_id', userId).first();
+    return row ? Applicant.toCamel(row) : null;
   }
 
-  static findById(id) {
-    return applicants.find((a) => a.id === id) || null;
+  static async findById(id) {
+    const row = await db('applicants').where('id', id).first();
+    return row ? Applicant.toCamel(row) : null;
   }
 
-  static update(id, updates) {
-    const idx = applicants.findIndex((a) => a.id === id);
-    if (idx === -1) throw new Error('Applicant not found');
+  static async update(id, updates) {
+    const mapping = {
+      passportNumber: 'passport_number', nationality: 'nationality',
+      countryOfOrigin: 'country_of_origin', dateOfBirth: 'date_of_birth',
+      gender: 'gender', maritalStatus: 'marital_status',
+      purposeOfStay: 'purpose_of_stay', intendedDuration: 'intended_duration',
+      currentVisaStatus: 'current_visa_status', onboardingComplete: 'onboarding_complete',
+    };
+    const jsonFields = {
+      qualifications: 'qualifications', employmentHistory: 'employment_history',
+      familyTiesInSA: 'family_ties_in_sa', financialStanding: 'financial_standing',
+    };
 
-    const allowed = [
-      'passportNumber', 'nationality', 'countryOfOrigin', 'dateOfBirth',
-      'gender', 'maritalStatus', 'purposeOfStay', 'intendedDuration',
-      'qualifications', 'employmentHistory', 'familyTiesInSA',
-      'financialStanding', 'currentVisaStatus', 'onboardingComplete',
-    ];
-
-    for (const key of allowed) {
-      if (updates[key] !== undefined) {
-        applicants[idx][key] = updates[key];
-      }
+    const dbUpdates = {};
+    for (const [jsKey, dbKey] of Object.entries(mapping)) {
+      if (updates[jsKey] !== undefined) dbUpdates[dbKey] = updates[jsKey];
     }
-    applicants[idx].updatedAt = new Date().toISOString();
-    return applicants[idx];
+    for (const [jsKey, dbKey] of Object.entries(jsonFields)) {
+      if (updates[jsKey] !== undefined) dbUpdates[dbKey] = JSON.stringify(updates[jsKey]);
+    }
+    dbUpdates.updated_at = new Date().toISOString();
+
+    const count = await db('applicants').where('id', id).update(dbUpdates);
+    if (count === 0) throw new Error('Applicant not found');
+    const row = await db('applicants').where('id', id).first();
+    return Applicant.toCamel(row);
   }
 
-  static list({ page = 1, limit = 20 }) {
-    const start = (page - 1) * limit;
+  static async list({ page = 1, limit = 20 }) {
+    const countResult = await db('applicants').count('* as count').first();
+    const rows = await db('applicants').offset((page - 1) * limit).limit(limit);
     return {
-      applicants: applicants.slice(start, start + limit),
-      total: applicants.length,
+      applicants: rows.map(Applicant.toCamel),
+      total: countResult.count,
       page,
       limit,
+    };
+  }
+
+  static toCamel(row) {
+    const parseJSON = (val) => {
+      if (val === null || val === undefined) return null;
+      if (typeof val === 'string') { try { return JSON.parse(val); } catch { return val; } }
+      return val;
+    };
+    return {
+      id: row.id,
+      userId: row.user_id,
+      passportNumber: row.passport_number,
+      nationality: row.nationality,
+      countryOfOrigin: row.country_of_origin,
+      dateOfBirth: row.date_of_birth,
+      gender: row.gender,
+      maritalStatus: row.marital_status,
+      purposeOfStay: row.purpose_of_stay,
+      intendedDuration: row.intended_duration,
+      qualifications: parseJSON(row.qualifications) || [],
+      employmentHistory: parseJSON(row.employment_history) || [],
+      familyTiesInSA: parseJSON(row.family_ties_in_sa),
+      financialStanding: parseJSON(row.financial_standing),
+      currentVisaStatus: row.current_visa_status,
+      onboardingComplete: !!row.onboarding_complete,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
     };
   }
 }

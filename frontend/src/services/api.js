@@ -97,4 +97,11 @@ export const knowledgeAPI = {
   getChecklist: (visaCategoryId) => api.get(`/knowledge/checklist/${visaCategoryId}`),
 };
 
+// Conversation / Chat
+export const chatAPI = {
+  sendMessage: (message) => api.post('/conversation/message', { message }),
+  sendAuthMessage: (message) => api.post('/conversation/message/auth', { message }),
+  getSuggestions: () => api.get('/conversation/suggestions'),
+};
+
 export default api;
